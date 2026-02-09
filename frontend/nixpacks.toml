@@ -1,0 +1,14 @@
+# Railway build configuration for CulturePassport Frontend
+# Nixpacks auto-detects Node.js and runs build commands
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npx serve -s dist -l $PORT"
