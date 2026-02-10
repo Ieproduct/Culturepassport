@@ -8,6 +8,7 @@ import {
   SupervisorAccount as RoleIcon,
   Cached as ClearIcon,
 } from '@mui/icons-material'
+import { space } from '@/theme/spacing'
 import { supabase } from '@/lib/supabase'
 import { useProfiles } from '@/hooks/useProfiles'
 import { useCascadingFilter } from '@/hooks/useCascadingFilter'
@@ -40,7 +41,7 @@ const TABLE_COLUMNS = [
 
 /* ─── Shared sx for custom select dropdowns (Figma 42:13772) ─── */
 const selectSx = {
-  height: 42,
+  height: 40,
   borderRadius: '10px',
   fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
   fontSize: 16,
@@ -65,11 +66,11 @@ const selectSx = {
   },
 }
 
-/* ─── Filter Label (icon + text) ─── */
+/* ─── Filter Label (icon + text) — icon gray-500 ─── */
 function FilterLabel({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', height: 20 }}>
-      <Box sx={{ display: 'flex', color: '#364153', fontSize: 16, flexShrink: 0 }}>{icon}</Box>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: space[8], height: 20 }}>
+      <Box sx={{ display: 'flex', color: '#6B7280', fontSize: 16, flexShrink: 0 }}>{icon}</Box>
       <Typography
         sx={{
           fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
@@ -143,6 +144,14 @@ export function UsersTab() {
     })
   }, [profiles, searchText, companyMap, departmentMap, positionMap])
 
+  /* Whether any filter is active (controls ล้างทั้งหมด button) */
+  const hasActiveFilter =
+    !!searchText.trim() ||
+    !!filter.selectedCompany ||
+    !!filter.selectedDepartment ||
+    !!filter.selectedPosition ||
+    !!selectedRole
+
   /* Clear all filters */
   const handleClearAll = () => {
     setSearchText('')
@@ -154,7 +163,7 @@ export function UsersTab() {
 
   return (
     <Box>
-      {error && <Alert severity="error" sx={{ mb: '16px' }}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: space[16] }}>{error}</Alert>}
 
       {/* ═══ Filter Panel (Figma 42:13745) ═══ */}
       <Box
@@ -162,12 +171,10 @@ export function UsersTab() {
           bgcolor: '#FFFFFF',
           border: '1px solid #E5E7EB',
           borderRadius: '10px',
-          pt: '25px',
-          px: '25px',
-          pb: '25px',
+          p: space[24],
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px',
+          gap: space[16],
         }}
       >
         {/* ─── Header: Title + Clear Button (42:13746) ─── */}
@@ -192,31 +199,34 @@ export function UsersTab() {
             ค้นหาและกรองข้อมูล
           </Typography>
 
-          {/* ล้างทั้งหมด Button (42:13749) */}
+          {/* ล้างทั้งหมด Button (42:13749) — disabled when no filter active */}
           <Box
-            onClick={handleClearAll}
+            onClick={hasActiveFilter ? handleClearAll : undefined}
             sx={{
               bgcolor: '#FFFFFF',
-              border: '2px solid #F62B25',
+              border: '2px solid',
+              borderColor: hasActiveFilter ? '#F62B25' : '#D1D5DC',
               borderRadius: '10px',
               height: 48,
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              px: '20px',
-              cursor: 'pointer',
+              gap: space[8],
+              px: space[20],
+              cursor: hasActiveFilter ? 'pointer' : 'default',
               flexShrink: 0,
-              '&:hover': { bgcolor: '#FEF2F2' },
+              opacity: hasActiveFilter ? 1 : 0.5,
+              transition: 'all 0.2s',
+              '&:hover': hasActiveFilter ? { bgcolor: '#FEF2F2' } : {},
             }}
           >
-            <ClearIcon sx={{ fontSize: 16, color: '#F62B25' }} />
+            <ClearIcon sx={{ fontSize: 16, color: hasActiveFilter ? '#F62B25' : '#9CA3AF' }} />
             <Typography
               sx={{
                 fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
                 fontWeight: 500,
                 fontSize: 16,
                 lineHeight: '24px',
-                color: '#F62B25',
+                color: hasActiveFilter ? '#F62B25' : '#9CA3AF',
                 letterSpacing: '-0.31px',
                 whiteSpace: 'nowrap',
               }}
@@ -231,7 +241,7 @@ export function UsersTab() {
           <SearchIcon
             sx={{
               position: 'absolute',
-              left: 12,
+              left: space[12],
               top: 15,
               fontSize: 20,
               color: 'rgba(10,10,10,0.5)',
@@ -246,14 +256,14 @@ export function UsersTab() {
             onChange={(e) => setSearchText(e.target.value)}
             sx={{
               '& .MuiOutlinedInput-root': {
-                height: 50,
+                height: 48,
                 borderRadius: '10px',
                 fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
                 fontSize: 16,
                 letterSpacing: '-0.31px',
                 '& .MuiOutlinedInput-input': {
-                  pl: '40px',
-                  py: '12px',
+                  pl: space[40],
+                  py: space[12],
                   '&::placeholder': {
                     color: 'rgba(10,10,10,0.5)',
                     opacity: 1,
@@ -279,11 +289,11 @@ export function UsersTab() {
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-            gap: '16px',
+            gap: space[16],
           }}
         >
           {/* บริษัท (42:13761) */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[8] }}>
             <FilterLabel icon={<CompanyIcon sx={{ fontSize: 16 }} />}>บริษัท</FilterLabel>
             <Select
               value={filter.selectedCompany ?? ''}
@@ -299,7 +309,7 @@ export function UsersTab() {
           </Box>
 
           {/* แผนก (42:13825) */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[8] }}>
             <FilterLabel icon={<DepartmentIcon sx={{ fontSize: 16 }} />}>แผนก</FilterLabel>
             <Select
               value={filter.selectedDepartment ?? ''}
@@ -315,7 +325,7 @@ export function UsersTab() {
           </Box>
 
           {/* ตำแหน่ง (42:13844) */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[8] }}>
             <FilterLabel icon={<PositionIcon sx={{ fontSize: 16 }} />}>ตำแหน่ง</FilterLabel>
             <Select
               value={filter.selectedPosition ?? ''}
@@ -331,7 +341,7 @@ export function UsersTab() {
           </Box>
 
           {/* บทบาท (42:13853) */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[8] }}>
             <FilterLabel icon={<RoleIcon sx={{ fontSize: 16 }} />}>บทบาท</FilterLabel>
             <Select
               value={selectedRole}
@@ -347,7 +357,7 @@ export function UsersTab() {
         </Box>
 
         {/* ─── Bottom: Result Count (42:13871) ─── */}
-        <Box sx={{ borderTop: '1px solid #E5E7EB', pt: '17px' }}>
+        <Box sx={{ borderTop: '1px solid #E5E7EB', pt: space[16] }}>
           <Typography
             component="div"
             sx={{
@@ -379,16 +389,14 @@ export function UsersTab() {
           border: '1px solid #E5E7EB',
           borderRadius: '10px',
           overflow: 'hidden',
-          mt: '16px',
+          mt: space[16],
         }}
       >
         {/* ─── Table Title (42:13881) ─── */}
         <Box
           sx={{
             borderBottom: '1px solid #E5E7EB',
-            pt: '20px',
-            px: '20px',
-            pb: '20px',
+            p: space[20],
           }}
         >
           <Typography
@@ -423,8 +431,8 @@ export function UsersTab() {
                     style={{
                       backgroundColor: '#F9FAFB',
                       borderBottom: '1px solid #E5E7EB',
-                      height: 41,
-                      padding: '0 24px',
+                      height: 40,
+                      padding: `0 ${space[24]}`,
                       textAlign: 'left',
                       fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
                       fontWeight: 500,
@@ -445,7 +453,7 @@ export function UsersTab() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: 'center', padding: '60px 24px' }}>
+                  <td colSpan={9} style={{ textAlign: 'center', padding: `${space[64]} ${space[24]}` }}>
                     <Typography
                       sx={{
                         fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
@@ -461,13 +469,13 @@ export function UsersTab() {
               ) : filteredProfiles.length === 0 ? (
                 /* ─── Empty State (42:13908) ─── */
                 <tr>
-                  <td colSpan={9} style={{ textAlign: 'center', padding: '48px 24px' }}>
+                  <td colSpan={9} style={{ textAlign: 'center', padding: `${space[48]} ${space[24]}` }}>
                     <Box
                       sx={{
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        gap: '12px',
+                        gap: space[12],
                       }}
                     >
                       <SearchIcon sx={{ fontSize: 48, color: '#9CA3AF' }} />
@@ -549,7 +557,7 @@ export function UsersTab() {
 
 /* ─── Shared cell style for data rows ─── */
 const cellStyle: React.CSSProperties = {
-  padding: '12px 24px',
+  padding: `${space[12]} ${space[24]}`,
   fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
   fontSize: 14,
   lineHeight: '20px',
