@@ -85,7 +85,11 @@ Deno.serve(async (req) => {
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email: body.email,
       password: body.password,
-      email_confirm: true, // Auto-confirm email
+      email_confirm: true,
+      user_metadata: {
+        full_name: body.full_name,
+        role: body.role,
+      },
     });
 
     if (createError) {
@@ -102,10 +106,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 4. Create profile row (using service_role to bypass RLS)
+    // 4. Upsert profile row (trigger may have already created a basic row)
     const { error: profileError } = await adminClient
       .from("profiles")
-      .insert({
+      .upsert({
         id: newUser.user.id,
         full_name: body.full_name,
         email: body.email,
@@ -116,7 +120,7 @@ Deno.serve(async (req) => {
         probation_start: body.probation_start ?? null,
         probation_end: body.probation_end ?? null,
         status: "active",
-      });
+      }, { onConflict: "id" });
 
     if (profileError) {
       // Rollback: delete the auth user if profile creation fails
