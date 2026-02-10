@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material'
 import { space } from '@/theme/spacing'
 import { useExams } from '@/hooks/useExams'
+import { CreateExamForm } from './CreateExamForm'
 
 const ITEMS_PER_PAGE = 10
 
@@ -533,6 +534,7 @@ export function ExamsTab() {
   const [searchText, setSearchText] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('ทุกหมวดหมู่')
   const [currentPage, setCurrentPage] = useState(1)
+  const [showCreateForm, setShowCreateForm] = useState(false)
 
   /* Use real data if available, otherwise fall back to mock */
   const useMock = examTemplates.length === 0 && !loading
@@ -614,6 +616,11 @@ export function ExamsTab() {
     )
   }
 
+  /* Show create form when user clicks "สร้างแบบทดสอบใหม่" */
+  if (showCreateForm) {
+    return <CreateExamForm onCancel={() => setShowCreateForm(false)} />
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[16] }}>
       {error && !useMock && <Alert severity="error">{error}</Alert>}
@@ -655,6 +662,7 @@ export function ExamsTab() {
         </Box>
 
         <Box
+          onClick={() => setShowCreateForm(true)}
           sx={{
             bgcolor: '#F62B25',
             height: 40,

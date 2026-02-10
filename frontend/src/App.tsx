@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider, CssBaseline } from '@mui/material'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { theme } from '@/theme'
 import { AuthProvider, MockAuthProvider } from '@/contexts/AuthContext'
 import { RoleGuard } from '@/guards/RoleGuard'
@@ -12,6 +14,7 @@ export function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
       <BrowserRouter>
         <AuthProvider>
           <Routes>
@@ -58,6 +61,7 @@ export function App() {
           </Routes>
         </AuthProvider>
       </BrowserRouter>
+      </LocalizationProvider>
     </ThemeProvider>
   )
 }

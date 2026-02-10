@@ -3,6 +3,7 @@ import { colors } from './colors';
 import { SPACING_BASE } from './spacing';
 import { buildMuiShadows } from './shadows';
 import { typographyTokens } from './typography';
+import { ChevronDownIcon } from '@/components/common/ChevronDownIcon';
 
 const theme = createTheme({
   // Spacing: 8px grid (Constitution Principle II)
@@ -220,6 +221,18 @@ const theme = createTheme({
       styleOverrides: {
         paper: {
           borderRight: `1px solid ${colors.gray[200]}`,
+        },
+      },
+    },
+    MuiSelect: {
+      defaultProps: {
+        IconComponent: ChevronDownIcon,
+      },
+      styleOverrides: {
+        icon: {
+          fontSize: 20,
+          right: 12,
+          color: '#6B7280',
         },
       },
     },
