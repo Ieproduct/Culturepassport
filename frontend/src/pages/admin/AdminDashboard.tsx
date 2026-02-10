@@ -20,6 +20,7 @@ import {
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { IconCategory } from '@/components/icons/IconCategory'
 import { useAuth } from '@/hooks/useAuth'
+import { space } from '@/theme/spacing'
 import { OverviewTab } from './OverviewTab'
 import { UsersTab } from './UsersTab'
 import { MissionsTab } from './MissionsTab'
@@ -51,9 +52,9 @@ function InfoChip({ icon, label, value }: { icon: ReactNode; label: string; valu
     <Box
       sx={{
         display: 'flex',
-        gap: '8px',
+        gap: space[8],
         alignItems: 'center',
-        minWidth: { xs: 'calc(50% - 8px)', sm: 'auto' },
+        minWidth: 'auto',
       }}
     >
       <Box
@@ -76,7 +77,7 @@ function InfoChip({ icon, label, value }: { icon: ReactNode; label: string; valu
           sx={{
             fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
             fontWeight: 400,
-            fontSize: { xs: 11, sm: 12 },
+            fontSize: 12,
             lineHeight: '16px',
             color: '#FFFFFF',
           }}
@@ -87,7 +88,7 @@ function InfoChip({ icon, label, value }: { icon: ReactNode; label: string; valu
           sx={{
             fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
             fontWeight: 600,
-            fontSize: { xs: 12, sm: 14 },
+            fontSize: 14,
             lineHeight: '20px',
             color: '#FFFFFF',
             letterSpacing: '-0.15px',
@@ -129,10 +130,10 @@ export function AdminDashboard() {
           background: 'linear-gradient(170.6deg, #E7000B 0%, #C10007 50%, #A50036 100%)',
           borderRadius: '10px',
           boxShadow: '0px 10px 15px rgba(0,0,0,0.1), 0px 4px 6px rgba(0,0,0,0.1)',
-          pt: { xs: '20px', sm: '24px', md: '32px' },
-          px: { xs: '16px', sm: '24px', md: '32px' },
+          pt: space[32],
+          px: space[32],
           pb: 0,
-          mb: '24px',
+          mb: space[24],
         }}
       >
         {/* Heading */}
@@ -140,8 +141,8 @@ export function AdminDashboard() {
           sx={{
             fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
             fontWeight: 700,
-            fontSize: { xs: 22, sm: 26, md: 30 },
-            lineHeight: { xs: '28px', sm: '32px', md: '36px' },
+            fontSize: 30,
+            lineHeight: '36px',
             color: '#FFFFFF',
             letterSpacing: '0.4px',
             textShadow: '0px 3px 6px rgba(0,0,0,0.12)',
@@ -155,11 +156,11 @@ export function AdminDashboard() {
           sx={{
             fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
             fontWeight: 400,
-            fontSize: { xs: 14, md: 16 },
+            fontSize: 16,
             lineHeight: '24px',
             color: '#FFFFFF',
             letterSpacing: '-0.31px',
-            mt: '8px',
+            mt: space[8],
           }}
         >
           จัดการระบบและส่งออกข้อมูล
@@ -169,12 +170,12 @@ export function AdminDashboard() {
         <Box
           sx={{
             borderTop: '1px solid rgba(255,255,255,0.4)',
-            mt: '8px',
-            pt: '16px',
-            pb: '16px',
+            mt: space[8],
+            pt: space[16],
+            pb: space[16],
             display: 'flex',
             flexWrap: 'wrap',
-            gap: { xs: '10px 16px', sm: '12px', md: '16px' },
+            gap: space[16],
           }}
         >
           <InfoChip icon={<PersonIcon sx={{ fontSize: 16 }} />} label="ชื่อ-นามสกุล" value={profile?.full_name ?? MOCK_HERO.fullName} />
@@ -191,7 +192,7 @@ export function AdminDashboard() {
         sx={{
           borderBottom: '1px solid #E5E7EB',
           pb: '1px',
-          mb: '24px',
+          mb: space[24],
           width: '100%',
         }}
       >
@@ -209,16 +210,16 @@ export function AdminDashboard() {
               display: 'none',
             },
             '& .MuiTabs-flexContainer': {
-              gap: { xs: '4px', sm: '8px' },
+              gap: space[8],
             },
             '& .MuiTab-root': {
               minHeight: 42,
               minWidth: 'auto',
-              px: { xs: '6px', sm: '8px' },
-              py: '8px',
+              px: space[8],
+              py: space[8],
               fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
               fontWeight: 500,
-              fontSize: { xs: 13, sm: 14, md: 16 },
+              fontSize: 16,
               lineHeight: '24px',
               letterSpacing: '-0.31px',
               textTransform: 'none',
@@ -227,8 +228,8 @@ export function AdminDashboard() {
                 color: '#F62B25',
               },
               '& .MuiTab-iconWrapper': {
-                fontSize: { xs: 18, md: 20 },
-                mr: '6px',
+                fontSize: 20,
+                mr: space[6],
               },
             },
           }}

@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material'
+import { space } from '@/theme/spacing'
 import { colors } from '@/theme'
 
 export function Footer() {
@@ -7,36 +8,42 @@ export function Footer() {
       component="footer"
       sx={{
         width: '100%',
-        mt: 'auto',
-        backgroundColor: colors.base.white,
+        mt: space[48],
+        bgcolor: colors.base.white,
         borderTop: `1px solid ${colors.gray[200]}`,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        px: { xs: 2, sm: 4 },
-        py: 2,
       }}
     >
       <Box
         sx={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          maxWidth: 1280,
+          mx: 'auto',
+          px: { xs: space[16], sm: space[24], lg: space[32] },
+          py: space[24],
+          textAlign: 'center',
         }}
       >
         <Typography
           sx={{
-            fontFamily: "'Inter', sans-serif",
+            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
             fontWeight: 400,
             fontSize: 14,
-            lineHeight: '18px',
-            color: colors.gray[400],
-            whiteSpace: 'nowrap',
+            lineHeight: '20px',
+            color: colors.gray[500],
           }}
         >
-          Copyright &copy; {new Date().getFullYear()} LOTTERYPLUS. All rights reserved.
+          CulturePassport &copy; {new Date().getFullYear()} - ระบบติดตามการเข้าปรับตัวพนักงานใหม่
+        </Typography>
+        <Typography
+          sx={{
+            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontWeight: 400,
+            fontSize: 12,
+            lineHeight: '16px',
+            color: colors.gray[400],
+            mt: space[4],
+          }}
+        >
+          พัฒนาด้วย React + TypeScript | Data Portability Ready (JSON/SQL Export)
         </Typography>
       </Box>
     </Box>

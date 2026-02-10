@@ -1,6 +1,7 @@
 import { Box } from '@mui/material'
 import { Navbar } from './Navbar'
 import { Footer } from './Footer'
+import { space } from '@/theme/spacing'
 import type { ReactNode } from 'react'
 
 type DashboardLayoutProps = {
@@ -14,7 +15,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         display: 'flex',
         flexDirection: 'column',
         minHeight: '100vh',
-        background: 'linear-gradient(147deg, #F9FAFB 0%, #FFFFFF 50%, #F9FAFB 100%)',
+        bgcolor: '#F9FAFB',
       }}
     >
       <Navbar />
@@ -24,8 +25,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          py: { xs: '16px', sm: '20px', md: '24px' },
-          px: { xs: '12px', sm: '20px', md: '32px' },
+          py: space[32],
+          px: { xs: space[16], sm: space[24], lg: space[32] },
           maxWidth: 1280,
           width: '100%',
           mx: 'auto',

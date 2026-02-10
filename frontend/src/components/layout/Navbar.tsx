@@ -5,6 +5,7 @@ import { IconCategory } from '@/components/icons/IconCategory'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
+import { space } from '@/theme/spacing'
 import type { UserRole } from '@/types'
 
 const roleLabelMap: Record<UserRole, string> = {
@@ -57,9 +58,9 @@ export function Navbar() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: { xs: 56, sm: 60, md: 64 },
-          px: { xs: '12px', sm: '20px', md: '32px' },
-          maxWidth: 1280,
+          height: 64,
+          px: space[32],
+          maxWidth: 1440,
           mx: 'auto',
           width: '100%',
         }}
@@ -70,7 +71,7 @@ export function Navbar() {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: { xs: '8px', sm: '12px' },
+            gap: space[12],
             cursor: 'pointer',
             height: 44,
             flexShrink: 0,
@@ -79,8 +80,8 @@ export function Navbar() {
         >
           <Box
             sx={{
-              width: { xs: 32, sm: 40 },
-              height: { xs: 32, sm: 40 },
+              width: 40,
+              height: 40,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -92,8 +93,8 @@ export function Navbar() {
               src="/logo.png"
               alt="CulturePassport"
               sx={{
-                width: { xs: 28, sm: 36 },
-                height: { xs: 28, sm: 36 },
+                width: 36,
+                height: 36,
                 objectFit: 'cover',
               }}
             />
@@ -104,7 +105,7 @@ export function Navbar() {
               sx={{
                 fontFamily: "'Inter', sans-serif",
                 fontWeight: 700,
-                fontSize: { xs: 16, sm: 18, md: 20 },
+                fontSize: 20,
                 lineHeight: '28px',
                 color: '#F62B25',
                 letterSpacing: '-0.95px',
@@ -120,7 +121,6 @@ export function Navbar() {
                 fontSize: 12,
                 lineHeight: '16px',
                 color: '#6A7282',
-                display: { xs: 'none', sm: 'block' },
               }}
             >
               ระบบติดตามการเข้าปรับตัว
@@ -134,17 +134,17 @@ export function Navbar() {
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: { xs: '8px', sm: '12px' },
+              gap: space[8],
               height: 46,
               flexShrink: 0,
             }}
           >
-            {/* Active page pill — lg+ only */}
+            {/* Active page pill */}
             <Box
               sx={{
-                display: { xs: 'none', lg: 'flex' },
+                display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: space[8],
                 height: 42,
                 px: '17px',
                 bgcolor: '#FEF2F2',
@@ -169,13 +169,13 @@ export function Navbar() {
               </Typography>
             </Box>
 
-            {/* Divider — lg+ only */}
+            {/* Divider */}
             <Box
               sx={{
                 width: '1px',
                 height: 40,
                 bgcolor: '#E5E7EB',
-                display: { xs: 'none', lg: 'block' },
+                mx: space[4],
                 flexShrink: 0,
               }}
             />
@@ -185,9 +185,9 @@ export function Navbar() {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                height: { xs: 40, sm: 46 },
-                px: { xs: '8px', sm: '13px' },
+                gap: space[8],
+                height: 46,
+                px: '13px',
                 bgcolor: '#F9FAFB',
                 border: '1px solid #E5E7EB',
                 borderRadius: '10px',
@@ -224,9 +224,9 @@ export function Navbar() {
 
               <Box
                 sx={{
-                  display: { xs: 'none', sm: 'flex' },
+                  display: 'flex',
                   flexDirection: 'column',
-                  gap: '2px',
+                  gap: space[2],
                 }}
               >
                 <Typography
@@ -263,9 +263,9 @@ export function Navbar() {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: space[8],
                 height: 40,
-                px: { xs: '8px', sm: '16px' },
+                px: space[16],
                 borderRadius: '10px',
                 cursor: 'pointer',
                 flexShrink: 0,
@@ -282,7 +282,6 @@ export function Navbar() {
                   color: '#E7000B',
                   letterSpacing: '-0.71px',
                   whiteSpace: 'nowrap',
-                  display: { xs: 'none', md: 'block' },
                 }}
               >
                 ออกจากระบบ

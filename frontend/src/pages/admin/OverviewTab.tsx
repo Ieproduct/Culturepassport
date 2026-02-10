@@ -8,6 +8,7 @@ import {
   TrackChanges as TargetIcon,
   Storage as DatabaseIcon,
 } from '@mui/icons-material'
+import { space } from '@/theme/spacing'
 import { supabase } from '@/lib/supabase'
 
 type Stats = {
@@ -38,14 +39,14 @@ function OverviewStatsCard({
       sx={{
         bgcolor: '#FFFFFF',
         borderRadius: '12px',
-        p: '24px',
+        p: space[24],
         border: '1px solid #F3F4F6',
         boxShadow: '0px 1px 2px rgba(0,0,0,0.05)',
         '&:hover': { boxShadow: '0px 4px 6px rgba(0,0,0,0.07)' },
         transition: 'box-shadow 0.2s',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', mb: '16px' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: space[12], mb: space[16] }}>
         <Box
           sx={{
             width: 48,
@@ -80,7 +81,7 @@ function OverviewStatsCard({
           fontSize: 30,
           lineHeight: '36px',
           color: '#111827',
-          mb: '8px',
+          mb: space[8],
         }}
       >
         {value}
@@ -145,8 +146,8 @@ function MissionStatusCard({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '4px',
-        minHeight: { xs: 80, sm: 90 },
+        gap: space[4],
+        minHeight: 90,
         justifyContent: 'center',
       }}
     >
@@ -183,7 +184,7 @@ function MissionStatusCard({
 /* ─── Section Heading with icon (Figma 32:13387) ─── */
 function SectionHeading({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: space[8] }}>
       <Box sx={{ display: 'flex', color: '#6B7280', fontSize: 20 }}>{icon}</Box>
       <Typography
         sx={{
@@ -220,8 +221,8 @@ function ActivityRow({ name, mission, date, score }: { name: string; mission: st
         height: 64,
         display: 'flex',
         alignItems: 'center',
-        px: '12px',
-        gap: '12px',
+        px: space[12],
+        gap: space[12],
       }}
     >
       <ActivityCheckIcon sx={{ fontSize: 20, color: '#22C55E', flexShrink: 0 }} />
@@ -275,7 +276,7 @@ function ActivityRow({ name, mission, date, score }: { name: string; mission: st
 }
 
 export function OverviewTab() {
-  const [stats, setStats] = useState<Stats>({ totalEmployees: 0, totalMissions: 0, completionRate: 0, pendingCount: 0 })
+  const [_stats, setStats] = useState<Stats>({ totalEmployees: 0, totalMissions: 0, completionRate: 0, pendingCount: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -319,14 +320,14 @@ export function OverviewTab() {
 
   return (
     <>
-    {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+    {error && <Alert severity="error" sx={{ mb: space[16] }}>{error}</Alert>}
 
     {/* ═══ Key Stats Cards (Figma Make design) ═══ */}
     <Box
       sx={{
         display: 'grid',
         gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-        gap: '16px',
+        gap: space[16],
       }}
     >
       <OverviewStatsCard
@@ -369,10 +370,8 @@ export function OverviewTab() {
         bgcolor: '#FFFFFF',
         border: '1px solid #E5E7EB',
         borderRadius: '10px',
-        pt: '25px',
-        px: '25px',
-        pb: '25px',
-        mt: '24px',
+        p: space[24],
+        mt: space[24],
       }}
     >
       <SectionHeading icon={<MissionStatusIcon sx={{ fontSize: 20 }} />}>
@@ -383,8 +382,8 @@ export function OverviewTab() {
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-          gap: '16px',
-          mt: '16px',
+          gap: space[16],
+          mt: space[16],
         }}
       >
         <MissionStatusCard
@@ -417,10 +416,8 @@ export function OverviewTab() {
         bgcolor: '#FFFFFF',
         border: '1px solid #E5E7EB',
         borderRadius: '10px',
-        pt: '25px',
-        px: '25px',
-        pb: '25px',
-        mt: '24px',
+        p: space[24],
+        mt: space[24],
       }}
     >
       <Typography
@@ -436,7 +433,7 @@ export function OverviewTab() {
         กิจกรรมล่าสุด
       </Typography>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '12px', mt: '16px' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[12], mt: space[16] }}>
         {MOCK_RECENT_ACTIVITIES.map((activity, index) => (
           <ActivityRow key={index} {...activity} />
         ))}
