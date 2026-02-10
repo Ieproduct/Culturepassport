@@ -1,23 +1,115 @@
 import { useState, useEffect, type ReactNode } from 'react'
 import { Box, CircularProgress, Alert, Typography } from '@mui/material'
-import Grid from '@mui/material/Grid2'
 import {
   People,
-  Assignment,
   CheckCircle,
-  HourglassEmpty,
   Assessment as MissionStatusIcon,
   CheckCircleOutline as ActivityCheckIcon,
+  TrackChanges as TargetIcon,
+  Storage as DatabaseIcon,
 } from '@mui/icons-material'
-import { StatsCard } from '@/components/common/StatsCard'
 import { supabase } from '@/lib/supabase'
-import { colors } from '@/theme'
 
 type Stats = {
   totalEmployees: number
   totalMissions: number
   completionRate: number
   pendingCount: number
+}
+
+/* ─── Overview Stats Card (Figma Make design) ─── */
+function OverviewStatsCard({
+  icon,
+  iconBgColor,
+  iconColor,
+  label,
+  value,
+  subtitle,
+}: {
+  icon: ReactNode
+  iconBgColor: string
+  iconColor: string
+  label: string
+  value: string | number
+  subtitle: string
+}) {
+  return (
+    <Box
+      sx={{
+        bgcolor: '#FFFFFF',
+        borderRadius: '12px',
+        p: '24px',
+        border: '1px solid #F3F4F6',
+        boxShadow: '0px 1px 2px rgba(0,0,0,0.05)',
+        '&:hover': { boxShadow: '0px 4px 6px rgba(0,0,0,0.07)' },
+        transition: 'box-shadow 0.2s',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', mb: '16px' }}>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: '12px',
+            bgcolor: iconBgColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            color: iconColor,
+          }}
+        >
+          {icon}
+        </Box>
+        <Typography
+          sx={{
+            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontWeight: 500,
+            fontSize: 14,
+            lineHeight: '20px',
+            color: '#6B7280',
+          }}
+        >
+          {label}
+        </Typography>
+      </Box>
+      <Typography
+        sx={{
+          fontFamily: "'Inter', sans-serif",
+          fontWeight: 700,
+          fontSize: 30,
+          lineHeight: '36px',
+          color: '#111827',
+          mb: '8px',
+        }}
+      >
+        {value}
+      </Typography>
+      <Typography
+        sx={{
+          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+          fontWeight: 400,
+          fontSize: 14,
+          lineHeight: '20px',
+          color: '#9CA3AF',
+        }}
+      >
+        {subtitle}
+      </Typography>
+    </Box>
+  )
+}
+
+/* ─── Mock stats matching Figma Make ─── */
+const MOCK_OVERVIEW_STATS = {
+  totalUsers: 21,
+  employees: 18,
+  managers: 1,
+  totalMissions: 18,
+  totalCategories: 11,
+  completionRate: 52,
+  completedMissions: 57,
+  totalUserMissions: 110,
 }
 
 /* ─── Mock data matching Figma 32:13386 ─── */
@@ -228,40 +320,48 @@ export function OverviewTab() {
   return (
     <>
     {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-    <Grid container spacing={3}>
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <StatsCard
-          icon={<People />}
-          label="จำนวนพนักงาน"
-          value={stats.totalEmployees}
-          color={colors.blue[500]}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <StatsCard
-          icon={<Assignment />}
-          label="จำนวน Missions"
-          value={stats.totalMissions}
-          color={colors.purple[500]}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <StatsCard
-          icon={<CheckCircle />}
-          label="อัตราสำเร็จ"
-          value={`${stats.completionRate}%`}
-          color={colors.green[500]}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <StatsCard
-          icon={<HourglassEmpty />}
-          label="รอดำเนินการ"
-          value={stats.pendingCount}
-          color={colors.orange[500]}
-        />
-      </Grid>
-    </Grid>
+
+    {/* ═══ Key Stats Cards (Figma Make design) ═══ */}
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+        gap: '16px',
+      }}
+    >
+      <OverviewStatsCard
+        icon={<People sx={{ fontSize: 24 }} />}
+        iconBgColor="#EFF6FF"
+        iconColor="#2563EB"
+        label="ผู้ใช้งานทั้งหมด"
+        value={MOCK_OVERVIEW_STATS.totalUsers}
+        subtitle={`${MOCK_OVERVIEW_STATS.employees} พนักงาน, ${MOCK_OVERVIEW_STATS.managers} ผู้จัดการ`}
+      />
+      <OverviewStatsCard
+        icon={<TargetIcon sx={{ fontSize: 24 }} />}
+        iconBgColor="#F0FDF4"
+        iconColor="#16A34A"
+        label="ภารกิจทั้งหมด"
+        value={MOCK_OVERVIEW_STATS.totalMissions}
+        subtitle={`${MOCK_OVERVIEW_STATS.totalCategories} หมวดหมู่`}
+      />
+      <OverviewStatsCard
+        icon={<CheckCircle sx={{ fontSize: 24 }} />}
+        iconBgColor="#FAF5FF"
+        iconColor="#9333EA"
+        label="อัตราเสร็จสิ้น"
+        value={`${MOCK_OVERVIEW_STATS.completionRate}%`}
+        subtitle={`${MOCK_OVERVIEW_STATS.completedMissions}/${MOCK_OVERVIEW_STATS.totalUserMissions} ภารกิจ`}
+      />
+      <OverviewStatsCard
+        icon={<DatabaseIcon sx={{ fontSize: 24 }} />}
+        iconBgColor="#FFF7ED"
+        iconColor="#EA580C"
+        label="ข้อมูลในระบบ"
+        value={MOCK_OVERVIEW_STATS.totalUserMissions}
+        subtitle="บันทึกภารกิจ"
+      />
+    </Box>
 
     {/* ═══ สถานะภารกิจ — Mission Status (Figma 32:13386) ═══ */}
     <Box
