@@ -22,11 +22,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         component="main"
         sx={{
           flexGrow: 1,
-          py: '24px',
-          px: { xs: '16px', sm: '24px', md: '32px' },
+          display: 'flex',
+          flexDirection: 'column',
+          py: { xs: '16px', sm: '20px', md: '24px' },
+          px: { xs: '12px', sm: '20px', md: '32px' },
           maxWidth: 1280,
           width: '100%',
           mx: 'auto',
+          boxSizing: 'border-box',
         }}
       >
         {children}

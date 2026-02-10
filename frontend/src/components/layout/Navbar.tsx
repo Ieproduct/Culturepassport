@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import { Logout as LogoutIcon } from '@mui/icons-material'
 import { IconCategory } from '@/components/icons/IconCategory'
+import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import type { UserRole } from '@/types'
@@ -20,8 +22,11 @@ const pageTitleMap: Record<UserRole, string> = {
 export function Navbar() {
   const { profile, role, logout } = useAuth()
   const navigate = useNavigate()
+  const [logoutOpen, setLogoutOpen] = useState(false)
+  const [logoutLoading, setLogoutLoading] = useState(false)
 
-  const handleLogout = async () => {
+  const handleLogoutConfirm = async () => {
+    setLogoutLoading(true)
     await logout()
     navigate('/login', { replace: true })
   }
@@ -47,14 +52,13 @@ export function Navbar() {
         width: '100%',
       }}
     >
-      {/* Inner container — 64px height */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: 64,
-          px: '32px',
+          height: { xs: 56, sm: 60, md: 64 },
+          px: { xs: '12px', sm: '20px', md: '32px' },
           maxWidth: 1280,
           mx: 'auto',
           width: '100%',
@@ -66,17 +70,17 @@ export function Navbar() {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            gap: { xs: '8px', sm: '12px' },
             cursor: 'pointer',
             height: 44,
             flexShrink: 0,
+            minWidth: 0,
           }}
         >
-          {/* Phoenix logo */}
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: { xs: 32, sm: 40 },
+              height: { xs: 32, sm: 40 },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -87,20 +91,24 @@ export function Navbar() {
               component="img"
               src="/logo.png"
               alt="CulturePassport"
-              sx={{ width: 36, height: 36, objectFit: 'cover' }}
+              sx={{
+                width: { xs: 28, sm: 36 },
+                height: { xs: 28, sm: 36 },
+                objectFit: 'cover',
+              }}
             />
           </Box>
 
-          {/* Brand text stack */}
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             <Typography
               sx={{
                 fontFamily: "'Inter', sans-serif",
                 fontWeight: 700,
-                fontSize: 20,
+                fontSize: { xs: 16, sm: 18, md: 20 },
                 lineHeight: '28px',
                 color: '#F62B25',
                 letterSpacing: '-0.95px',
+                whiteSpace: 'nowrap',
               }}
             >
               CulturePassport
@@ -126,15 +134,15 @@ export function Navbar() {
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              gap: { xs: '8px', sm: '12px' },
               height: 46,
               flexShrink: 0,
             }}
           >
-            {/* Active page pill button */}
+            {/* Active page pill — lg+ only */}
             <Box
               sx={{
-                display: { xs: 'none', md: 'flex' },
+                display: { xs: 'none', lg: 'flex' },
                 alignItems: 'center',
                 gap: '8px',
                 height: 42,
@@ -161,13 +169,13 @@ export function Navbar() {
               </Typography>
             </Box>
 
-            {/* Vertical divider — 1px */}
+            {/* Divider — lg+ only */}
             <Box
               sx={{
                 width: '1px',
                 height: 40,
                 bgcolor: '#E5E7EB',
-                display: { xs: 'none', md: 'block' },
+                display: { xs: 'none', lg: 'block' },
                 flexShrink: 0,
               }}
             />
@@ -178,8 +186,8 @@ export function Navbar() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                height: 46,
-                px: '13px',
+                height: { xs: 40, sm: 46 },
+                px: { xs: '8px', sm: '13px' },
                 bgcolor: '#F9FAFB',
                 border: '1px solid #E5E7EB',
                 borderRadius: '10px',
@@ -188,7 +196,6 @@ export function Navbar() {
                 '&:hover': { bgcolor: '#F3F4F6' },
               }}
             >
-              {/* Avatar circle */}
               <Box
                 sx={{
                   width: 32,
@@ -215,7 +222,6 @@ export function Navbar() {
                 </Typography>
               </Box>
 
-              {/* Account label + role */}
               <Box
                 sx={{
                   display: { xs: 'none', sm: 'flex' },
@@ -253,13 +259,13 @@ export function Navbar() {
 
             {/* Logout button */}
             <Box
-              onClick={handleLogout}
+              onClick={() => setLogoutOpen(true)}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 height: 40,
-                px: '16px',
+                px: { xs: '8px', sm: '16px' },
                 borderRadius: '10px',
                 cursor: 'pointer',
                 flexShrink: 0,
@@ -276,7 +282,7 @@ export function Navbar() {
                   color: '#E7000B',
                   letterSpacing: '-0.71px',
                   whiteSpace: 'nowrap',
-                  display: { xs: 'none', sm: 'block' },
+                  display: { xs: 'none', md: 'block' },
                 }}
               >
                 ออกจากระบบ
@@ -285,6 +291,14 @@ export function Navbar() {
           </Box>
         )}
       </Box>
+
+      {/* ═══ Logout Confirm Modal (Figma 40:11787) ═══ */}
+      <ConfirmDialog
+        open={logoutOpen}
+        onConfirm={handleLogoutConfirm}
+        onCancel={() => setLogoutOpen(false)}
+        loading={logoutLoading}
+      />
     </Box>
   )
 }

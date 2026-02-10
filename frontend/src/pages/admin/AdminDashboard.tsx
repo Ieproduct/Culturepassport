@@ -48,7 +48,14 @@ const tabs = [
 /* ─── Info chip in hero banner (Figma 32:13240–32:13306) ─── */
 function InfoChip({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <Box sx={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: '8px',
+        alignItems: 'center',
+        minWidth: { xs: 'calc(50% - 8px)', sm: 'auto' },
+      }}
+    >
       <Box
         sx={{
           width: 28,
@@ -69,7 +76,7 @@ function InfoChip({ icon, label, value }: { icon: ReactNode; label: string; valu
           sx={{
             fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
             fontWeight: 400,
-            fontSize: 12,
+            fontSize: { xs: 11, sm: 12 },
             lineHeight: '16px',
             color: '#FFFFFF',
           }}
@@ -80,7 +87,7 @@ function InfoChip({ icon, label, value }: { icon: ReactNode; label: string; valu
           sx={{
             fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
             fontWeight: 600,
-            fontSize: 14,
+            fontSize: { xs: 12, sm: 14 },
             lineHeight: '20px',
             color: '#FFFFFF',
             letterSpacing: '-0.15px',
@@ -122,18 +129,19 @@ export function AdminDashboard() {
           background: 'linear-gradient(170.6deg, #E7000B 0%, #C10007 50%, #A50036 100%)',
           borderRadius: '10px',
           boxShadow: '0px 10px 15px rgba(0,0,0,0.1), 0px 4px 6px rgba(0,0,0,0.1)',
-          pt: '32px',
-          px: '32px',
+          pt: { xs: '20px', sm: '24px', md: '32px' },
+          px: { xs: '16px', sm: '24px', md: '32px' },
           pb: 0,
           mb: '24px',
         }}
       >
+        {/* Heading */}
         <Typography
           sx={{
             fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
             fontWeight: 700,
-            fontSize: 30,
-            lineHeight: '36px',
+            fontSize: { xs: 22, sm: 26, md: 30 },
+            lineHeight: { xs: '28px', sm: '32px', md: '36px' },
             color: '#FFFFFF',
             letterSpacing: '0.4px',
             textShadow: '0px 3px 6px rgba(0,0,0,0.12)',
@@ -142,11 +150,12 @@ export function AdminDashboard() {
           แดชบอร์ดผู้ดูแลระบบ
         </Typography>
 
+        {/* Subtitle */}
         <Typography
           sx={{
             fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
             fontWeight: 400,
-            fontSize: 16,
+            fontSize: { xs: 14, md: 16 },
             lineHeight: '24px',
             color: '#FFFFFF',
             letterSpacing: '-0.31px',
@@ -156,15 +165,16 @@ export function AdminDashboard() {
           จัดการระบบและส่งออกข้อมูล
         </Typography>
 
+        {/* ─── Separator + Info chips ─── */}
         <Box
           sx={{
-            borderTop: '1px solid #FFFFFF',
+            borderTop: '1px solid rgba(255,255,255,0.4)',
             mt: '8px',
             pt: '16px',
             pb: '16px',
             display: 'flex',
             flexWrap: 'wrap',
-            gap: { xs: '12px', md: '16px' },
+            gap: { xs: '10px 16px', sm: '12px', md: '16px' },
           }}
         >
           <InfoChip icon={<PersonIcon sx={{ fontSize: 16 }} />} label="ชื่อ-นามสกุล" value={profile?.full_name ?? MOCK_HERO.fullName} />
@@ -176,7 +186,7 @@ export function AdminDashboard() {
         </Box>
       </Box>
 
-      {/* ═══ Tabs Section (Figma 32:13307) — with icons, fill width ═══ */}
+      {/* ═══ Tabs (Figma 32:13307) — icons + labels, fill width ═══ */}
       <Box
         sx={{
           borderBottom: '1px solid #E5E7EB',
@@ -199,25 +209,25 @@ export function AdminDashboard() {
               display: 'none',
             },
             '& .MuiTabs-flexContainer': {
-              gap: '8px',
+              gap: { xs: '4px', sm: '8px' },
             },
             '& .MuiTab-root': {
               minHeight: 42,
               minWidth: 'auto',
-              px: '8px',
+              px: { xs: '6px', sm: '8px' },
               py: '8px',
               fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
               fontWeight: 500,
-              fontSize: 16,
+              fontSize: { xs: 13, sm: 14, md: 16 },
               lineHeight: '24px',
               letterSpacing: '-0.31px',
               textTransform: 'none',
-              color: '#4A5565',
+              color: '#6B7280',
               '&.Mui-selected': {
                 color: '#F62B25',
               },
               '& .MuiTab-iconWrapper': {
-                fontSize: 20,
+                fontSize: { xs: 18, md: 20 },
                 mr: '6px',
               },
             },
@@ -235,7 +245,7 @@ export function AdminDashboard() {
         </Tabs>
       </Box>
 
-      {/* ═══ Tab Content — fills remaining layout ═══ */}
+      {/* ═══ Tab Content ═══ */}
       <Box sx={{ flexGrow: 1, width: '100%' }}>
         {activeTab === 0 && <OverviewTab />}
         {activeTab === 1 && <UsersTab />}
