@@ -105,7 +105,7 @@ function InfoChip({ icon, label, value }: { icon: ReactNode; label: string; valu
 
 /* ─── Mock data matching Figma exactly ─── */
 const MOCK_HERO = {
-  fullName: 'สมชาย ผู้ดูแล',
+  fullName: 'สมฤดี ศรีสมพร',
   employeeId: '2345678',
   company: 'บริษัท เทคโนโลยี จำกัด (มหาชน)',
   department: 'ทรัพยากรบุคคล',
