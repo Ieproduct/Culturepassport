@@ -1,6 +1,5 @@
 import { Box, Typography } from '@mui/material'
 import { space } from '@/theme/spacing'
-import { colors } from '@/theme'
 
 export function Footer() {
   return (
@@ -8,42 +7,37 @@ export function Footer() {
       component="footer"
       sx={{
         width: '100%',
-        mt: space[48],
-        bgcolor: colors.base.white,
-        borderTop: `1px solid ${colors.gray[200]}`,
+        bgcolor: '#FFFFFF',
+        borderTop: '1px solid #E5E7EB',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: { xs: space[16], sm: space[24], lg: space[32] },
       }}
     >
       <Box
         sx={{
-          maxWidth: 1280,
-          mx: 'auto',
-          px: { xs: space[16], sm: space[24], lg: space[32] },
-          py: space[24],
-          textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          maxWidth: 1440,
+          py: space[16],
         }}
       >
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             fontWeight: 400,
-            fontSize: 14,
-            lineHeight: '20px',
-            color: colors.gray[500],
+            fontSize: { xs: 12, sm: 14 },
+            lineHeight: '18px',
+            color: '#9CA3AF',
+            textAlign: 'center',
+            wordBreak: 'break-word',
           }}
         >
-          CulturePassport &copy; {new Date().getFullYear()} - ระบบติดตามการเข้าปรับตัวพนักงานใหม่
-        </Typography>
-        <Typography
-          sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-            fontWeight: 400,
-            fontSize: 12,
-            lineHeight: '16px',
-            color: colors.gray[400],
-            mt: space[4],
-          }}
-        >
-          พัฒนาด้วย React + TypeScript | Data Portability Ready (JSON/SQL Export)
+          Copyright &copy; {new Date().getFullYear()} LOTTERYPLUS. All rights reserved.
         </Typography>
       </Box>
     </Box>

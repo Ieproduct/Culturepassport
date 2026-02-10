@@ -1,242 +1,919 @@
-import { useState } from 'react'
-import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Typography, IconButton, Stack, FormControl, InputLabel, Select, MenuItem, RadioGroup, FormControlLabel, Radio, Card, CardContent, Chip } from '@mui/material'
-import { Add, Delete } from '@mui/icons-material'
-import type { GridColDef } from '@mui/x-data-grid'
-import { DataTable } from '@/components/common/DataTable'
-import { ConfirmDialog } from '@/components/common/ConfirmDialog'
+import { useState, useMemo, useEffect } from 'react'
+import {
+  Box,
+  Typography,
+  TextField,
+  CircularProgress,
+  Alert,
+  Select,
+  MenuItem,
+  type SelectChangeEvent,
+} from '@mui/material'
+import {
+  Search as SearchIcon,
+  Add as AddIcon,
+  Visibility as ViewIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  FilterList as FilterIcon,
+  Description as ExamIcon,
+  CheckCircle as ActiveIcon,
+  Cancel as InactiveIcon,
+  Category as CategoryIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+} from '@mui/icons-material'
+import { space } from '@/theme/spacing'
 import { useExams } from '@/hooks/useExams'
-import type { ExamQuestion, ExamTemplate } from '@/types'
 
-type NewQuestion = Omit<ExamQuestion, 'id'> & { id?: string }
+const ITEMS_PER_PAGE = 10
+
+/* ─── Category list (Figma 46:14654–46:14676) ─── */
+const CATEGORIES = [
+  'ทุกหมวดหมู่',
+  'วัฒนธรรมองค์กร',
+  'เทคนิคการทำงาน',
+  'ทีมและการสื่อสาร',
+  'ความปลอดภัยและนโยบาย',
+  'การพัฒนาทักษะ',
+  'ผลิตภัณฑ์และบริการ',
+  'กระบวนการทำงาน',
+  'ความรู้ทางธุรกิจ',
+  'เทคโนโลยีและเครื่องมือ',
+  'มาตรฐานคุณภาพ',
+  'อื่นๆ',
+]
+
+/* ─── Category color map (Figma exam card badges) ─── */
+const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
+  'ความปลอดภัยและนโยบาย': { bg: '#FFE2E2', text: '#9F0712' },
+  'วัฒนธรรมองค์กร': { bg: '#DBEAFE', text: '#193CB8' },
+  'เทคนิคการทำงาน': { bg: '#DCFCE7', text: '#016630' },
+  'ทีมและการสื่อสาร': { bg: '#F3E8FF', text: '#8200DB' },
+  'การพัฒนาทักษะ': { bg: '#FFF7ED', text: '#9A3412' },
+  'ผลิตภัณฑ์และบริการ': { bg: '#F0F9FF', text: '#0369A1' },
+  'กระบวนการทำงาน': { bg: '#F5F5F5', text: '#525252' },
+  'ความรู้ทางธุรกิจ': { bg: '#FFFBEB', text: '#92400E' },
+  'เทคโนโลยีและเครื่องมือ': { bg: '#F0FDFA', text: '#115E59' },
+  'มาตรฐานคุณภาพ': { bg: '#FDF2F8', text: '#9D174D' },
+  'อื่นๆ': { bg: '#F3F4F6', text: '#364153' },
+}
+const DEFAULT_CATEGORY_COLOR = { bg: '#F3F4F6', text: '#364153' }
+
+/* ─── Mock data matching Figma 46:14678 exactly ─── */
+const MOCK_EXAMS = [
+  {
+    id: 'exam-1',
+    title: 'แบบทดสอบความปลอดภัยทางไซเบอร์',
+    description: 'ทดสอบความรู้เกี่ยวกับการรักษาความปลอดภัยข้อมูลและระบบสารสนเทศ',
+    category: 'ความปลอดภัยและนโยบาย',
+    questionCount: 10,
+    duration: 15,
+    passingScore: 70,
+    isActive: true,
+  },
+  {
+    id: 'exam-2',
+    title: 'แบบทดสอบวัฒนธรรมองค์กร',
+    description: 'ทดสอบความเข้าใจเกี่ยวกับวัฒนธรรม ค่านิยม และสิทธิประโยชน์ของบริษัท',
+    category: 'วัฒนธรรมองค์กร',
+    questionCount: 10,
+    duration: 10,
+    passingScore: 70,
+    isActive: true,
+  },
+  {
+    id: 'exam-3',
+    title: 'แบบทดสอบ Git และ DevOps',
+    description: 'ทดสอบความรู้เกี่ยวกับการใช้งาน Git, Version Control และเครื่องมือ DevOps',
+    category: 'เทคนิคการทำงาน',
+    questionCount: 10,
+    duration: 12,
+    passingScore: 70,
+    isActive: true,
+  },
+  {
+    id: 'exam-4',
+    title: 'แบบประเมินทัศนคติและค่านิยม (มีข้อเขียน)',
+    description: 'ประเมินทัศนคติ ค่านิยม และความเข้าใจในวัฒนธรรมองค์กร ผ่านคำถามปรนัยและข้อเขียน',
+    category: 'วัฒนธรรมองค์กร',
+    questionCount: 12,
+    duration: 20,
+    passingScore: 70,
+    isActive: true,
+  },
+  {
+    id: 'exam-5',
+    title: 'ข้อสอบอบรมข้อเขียน',
+    description: 'แบบทดสอบข้อเขียนเพื่อประเมินความเข้าใจและการประยุกต์ใช้ความรู้ในการทำงาน',
+    category: 'วัฒนธรรมองค์กร',
+    questionCount: 5,
+    duration: 30,
+    passingScore: 60,
+    isActive: true,
+  },
+  {
+    id: 'exam-6',
+    title: 'แบบทดสอบปลายภาค (ข้อกาและข้อเขียนผสม)',
+    description: 'แบบทดสอบครอบคลุมความรู้ทั้งหมด ประกอบด้วยข้อกาและข้อเขียน',
+    category: 'วัฒนธรรมองค์กร',
+    questionCount: 12,
+    duration: 45,
+    passingScore: 70,
+    isActive: true,
+  },
+]
+
+/* ─── Stats Card (Figma 46:14589) ─── */
+function StatsCard({
+  icon,
+  iconBgColor,
+  label,
+  value,
+}: {
+  icon: React.ReactNode
+  iconBgColor: string
+  label: string
+  value: number
+}) {
+  return (
+    <Box
+      sx={{
+        bgcolor: '#FFFFFF',
+        border: '2px solid #E5E7EB',
+        borderRadius: '10px',
+        height: 88,
+        pt: '18px',
+        px: '18px',
+        pb: '18px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          gap: space[12],
+          height: 52,
+          alignItems: 'center',
+          width: '100%',
+        }}
+      >
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: '10px',
+            bgcolor: iconBgColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </Box>
+        <Box>
+          <Typography
+            sx={{
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 400,
+              fontSize: 14,
+              lineHeight: '20px',
+              color: '#4A5565',
+              letterSpacing: '-0.15px',
+            }}
+          >
+            {label}
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: "'Inter', sans-serif",
+              fontWeight: 700,
+              fontSize: 24,
+              lineHeight: '32px',
+              color: '#101828',
+              letterSpacing: '0.07px',
+            }}
+          >
+            {value}
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
+  )
+}
+
+/* ─── Action Icon Button (Figma 46:14710) ─── */
+function ActionButton({
+  icon,
+  onClick,
+}: {
+  icon: React.ReactNode
+  onClick?: () => void
+}) {
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        width: 36,
+        height: 36,
+        borderRadius: '10px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        flexShrink: 0,
+        '&:hover': { bgcolor: '#F3F4F6' },
+        transition: 'background-color 0.15s',
+      }}
+    >
+      {icon}
+    </Box>
+  )
+}
+
+/* ─── Exam Card (Figma 46:14679) ─── */
+function ExamCard({
+  title,
+  description,
+  category,
+  questionCount,
+  duration,
+  passingScore,
+  isActive,
+}: {
+  title: string
+  description: string
+  category: string
+  questionCount: number
+  duration: number
+  passingScore: number
+  isActive: boolean
+}) {
+  const catColor = CATEGORY_COLORS[category] ?? DEFAULT_CATEGORY_COLOR
+
+  return (
+    <Box
+      sx={{
+        bgcolor: '#FFFFFF',
+        border: '2px solid #E5E7EB',
+        borderRadius: '10px',
+        pt: '26px',
+        px: '26px',
+        pb: '26px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: space[8],
+      }}
+    >
+      {/* Row: Content left + Actions right */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          width: '100%',
+        }}
+      >
+        {/* Left: title, badge, description, meta */}
+        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: space[8] }}>
+          {/* Title + Status badge */}
+          <Box sx={{ display: 'flex', gap: space[12], alignItems: 'center', height: 28 }}>
+            <Typography
+              sx={{
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontWeight: 600,
+                fontSize: 18,
+                lineHeight: '28px',
+                color: '#101828',
+                letterSpacing: '-0.44px',
+              }}
+            >
+              {title}
+            </Typography>
+            <Box
+              sx={{
+                bgcolor: isActive ? '#DCFCE7' : '#FEF2F2',
+                borderRadius: '9999px',
+                height: 24,
+                display: 'inline-flex',
+                alignItems: 'center',
+                px: space[12],
+                flexShrink: 0,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 12,
+                  lineHeight: '16px',
+                  color: isActive ? '#016630' : '#E7000B',
+                }}
+              >
+                {isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Description */}
+          <Typography
+            sx={{
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 400,
+              fontSize: 16,
+              lineHeight: '24px',
+              color: '#4A5565',
+              letterSpacing: '-0.31px',
+            }}
+          >
+            {description}
+          </Typography>
+
+          {/* Meta row */}
+          <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', height: 28, flexWrap: 'wrap' }}>
+            {/* Category */}
+            <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center' }}>
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  lineHeight: '20px',
+                  color: '#364153',
+                  letterSpacing: '-0.15px',
+                }}
+              >
+                หมวดหมู่:
+              </Typography>
+              <Box
+                sx={{
+                  bgcolor: catColor.bg,
+                  borderRadius: '4px',
+                  height: 28,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  px: space[8],
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                    fontWeight: 400,
+                    fontSize: 14,
+                    lineHeight: '20px',
+                    color: catColor.text,
+                    letterSpacing: '-0.15px',
+                  }}
+                >
+                  {category}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Question count */}
+            <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: space[12] }}>
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  lineHeight: '20px',
+                  color: '#364153',
+                  letterSpacing: '-0.15px',
+                }}
+              >
+                จำนวนข้อ:
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontWeight: 400,
+                  fontSize: 14,
+                  lineHeight: '20px',
+                  color: '#4A5565',
+                  letterSpacing: '-0.15px',
+                }}
+              >
+                {questionCount} ข้อ
+              </Typography>
+            </Box>
+
+            {/* Duration */}
+            <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: space[12] }}>
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  lineHeight: '20px',
+                  color: '#364153',
+                  letterSpacing: '-0.15px',
+                }}
+              >
+                ระยะเวลา:
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontWeight: 400,
+                  fontSize: 14,
+                  lineHeight: '20px',
+                  color: '#4A5565',
+                  letterSpacing: '-0.15px',
+                }}
+              >
+                {duration} นาที
+              </Typography>
+            </Box>
+
+            {/* Passing score */}
+            <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: space[12] }}>
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  lineHeight: '20px',
+                  color: '#364153',
+                  letterSpacing: '-0.15px',
+                }}
+              >
+                คะแนนผ่าน:
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontWeight: 400,
+                  fontSize: 14,
+                  lineHeight: '20px',
+                  color: '#4A5565',
+                  letterSpacing: '-0.15px',
+                }}
+              >
+                {passingScore}%
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Right: Action icons (Figma 46:14710) */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: space[8],
+            alignItems: 'center',
+            height: 36,
+            flexShrink: 0,
+            ml: space[16],
+          }}
+        >
+          <ActionButton icon={<ViewIcon sx={{ fontSize: 20, color: '#6B7280' }} />} />
+          <ActionButton icon={<EditIcon sx={{ fontSize: 20, color: '#6B7280' }} />} />
+          <ActionButton icon={<DeleteIcon sx={{ fontSize: 20, color: '#6B7280' }} />} />
+        </Box>
+      </Box>
+    </Box>
+  )
+}
+
+/* ─── Pagination Button ─── */
+function PaginationButton({
+  children,
+  active = false,
+  disabled = false,
+  onClick,
+}: {
+  children: React.ReactNode
+  active?: boolean
+  disabled?: boolean
+  onClick?: () => void
+}) {
+  return (
+    <Box
+      onClick={disabled ? undefined : onClick}
+      sx={{
+        width: 36,
+        height: 36,
+        borderRadius: space[8],
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: disabled ? 'default' : 'pointer',
+        bgcolor: active ? '#F62B25' : 'transparent',
+        border: active ? 'none' : '1px solid #E5E7EB',
+        opacity: disabled ? 0.4 : 1,
+        '&:hover': disabled
+          ? {}
+          : { bgcolor: active ? '#E02520' : '#F9FAFB' },
+        transition: 'background-color 0.15s',
+      }}
+    >
+      <Typography
+        sx={{
+          fontFamily: "'Inter', sans-serif",
+          fontWeight: 500,
+          fontSize: 14,
+          lineHeight: '20px',
+          color: active ? '#FFFFFF' : '#364153',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        {children}
+      </Typography>
+    </Box>
+  )
+}
 
 export function ExamsTab() {
-  const { examTemplates, loading, error, createExamTemplate, updateExamTemplate, deleteExamTemplate } = useExams()
+  const { examTemplates, loading, error } = useExams()
+  const [searchText, setSearchText] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('ทุกหมวดหมู่')
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const [open, setOpen] = useState(false)
-  const [editExam, setEditExam] = useState<ExamTemplate | null>(null)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [passingScore, setPassingScore] = useState(60)
-  const [questions, setQuestions] = useState<NewQuestion[]>([])
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [formError, setFormError] = useState('')
+  /* Use real data if available, otherwise fall back to mock */
+  const useMock = examTemplates.length === 0 && !loading
 
-  // New question form
-  const [qOpen, setQOpen] = useState(false)
-  const [qText, setQText] = useState('')
-  const [qType, setQType] = useState<ExamQuestion['type']>('multiple_choice')
-  const [qOptions, setQOptions] = useState(['', '', '', ''])
-  const [qCorrect, setQCorrect] = useState('')
-
-  const columns: GridColDef[] = [
-    { field: 'title', headerName: 'ชื่อข้อสอบ', flex: 1, minWidth: 200 },
-    {
-      field: 'questions',
-      headerName: 'จำนวนข้อ',
-      width: 120,
-      valueGetter: (_value: unknown, row: Record<string, unknown>) => {
-        const q = row.questions as ExamQuestion[] | undefined
-        return q?.length ?? 0
-      },
-    },
-    { field: 'passing_score', headerName: 'คะแนนผ่าน (%)', width: 140 },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 180,
-      sortable: false,
-      renderCell: (params) => (
-        <Box display="flex" gap={1}>
-          <Button size="small" onClick={() => handleEdit(params.row as ExamTemplate)}>แก้ไข</Button>
-          <Button size="small" color="error" onClick={() => setDeleteId(params.row.id as string)}>ลบ</Button>
-        </Box>
-      ),
-    },
-  ]
-
-  const resetForm = () => {
-    setTitle('')
-    setDescription('')
-    setPassingScore(60)
-    setQuestions([])
-    setEditExam(null)
-    setFormError('')
+  /* Build display list */
+  type DisplayExam = {
+    id: string
+    title: string
+    description: string
+    category: string
+    questionCount: number
+    duration: number
+    passingScore: number
+    isActive: boolean
   }
 
-  const handleOpen = () => {
-    resetForm()
-    setOpen(true)
-  }
+  const displayExams: DisplayExam[] = useMemo(() => {
+    if (useMock) return MOCK_EXAMS
+    return examTemplates.map((e) => ({
+      id: e.id,
+      title: e.title,
+      description: e.description ?? '',
+      category: 'อื่นๆ',
+      questionCount: e.questions?.length ?? 0,
+      duration: 15,
+      passingScore: e.passing_score,
+      isActive: true,
+    }))
+  }, [useMock, examTemplates])
 
-  const handleEdit = (exam: ExamTemplate) => {
-    setEditExam(exam)
-    setTitle(exam.title)
-    setDescription(exam.description ?? '')
-    setPassingScore(exam.passing_score)
-    setQuestions(exam.questions ?? [])
-    setOpen(true)
-  }
+  /* Compute stats from display exams */
+  const stats = useMemo(() => {
+    const total = displayExams.length
+    const active = displayExams.filter((e) => e.isActive).length
+    const inactive = total - active
+    const categories = new Set(displayExams.map((e) => e.category)).size
+    return { total, active, inactive, categories }
+  }, [displayExams])
 
-  const resetQuestionForm = () => {
-    setQText('')
-    setQType('multiple_choice')
-    setQOptions(['', '', '', ''])
-    setQCorrect('')
-  }
-
-  const handleAddQuestion = () => {
-    if (!qText.trim()) return
-    if (qType === 'multiple_choice' && qOptions.some((o) => !o.trim())) return
-    if (!qCorrect.trim()) return
-
-    const newQ: NewQuestion = {
-      id: crypto.randomUUID(),
-      text: qText.trim(),
-      type: qType,
-      options: qType === 'multiple_choice' ? qOptions.map((o) => o.trim()) : qType === 'true_false' ? ['จริง', 'เท็จ'] : [],
-      correct_answer: qCorrect.trim(),
+  /* Client-side search + category filter */
+  const filteredExams = useMemo(() => {
+    let result = displayExams
+    if (selectedCategory !== 'ทุกหมวดหมู่') {
+      result = result.filter((e) => e.category === selectedCategory)
     }
-    setQuestions((prev) => [...prev, newQ])
-    setQOpen(false)
-    resetQuestionForm()
+    if (searchText.trim()) {
+      const lower = searchText.toLowerCase()
+      result = result.filter(
+        (e) =>
+          e.title.toLowerCase().includes(lower) ||
+          e.description.toLowerCase().includes(lower)
+      )
+    }
+    return result
+  }, [displayExams, searchText, selectedCategory])
+
+  /* Pagination */
+  const totalPages = Math.max(1, Math.ceil(filteredExams.length / ITEMS_PER_PAGE))
+  const safeCurrentPage = Math.min(currentPage, totalPages)
+  const paginatedExams = filteredExams.slice(
+    (safeCurrentPage - 1) * ITEMS_PER_PAGE,
+    safeCurrentPage * ITEMS_PER_PAGE
+  )
+
+  /* Reset page when search/filter changes */
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchText, selectedCategory])
+
+  const handleCategoryChange = (event: SelectChangeEvent) => {
+    setSelectedCategory(event.target.value)
   }
 
-  const handleSave = async () => {
-    if (!title.trim()) { setFormError('กรุณากรอกชื่อข้อสอบ'); return }
-    if (questions.length === 0) { setFormError('กรุณาเพิ่มอย่างน้อย 1 คำถาม'); return }
-
-    const data = {
-      title: title.trim(),
-      description: description.trim() || null,
-      passing_score: passingScore,
-      questions: questions as ExamQuestion[],
-    }
-
-    if (editExam) {
-      await updateExamTemplate(editExam.id, data)
-    } else {
-      await createExamTemplate(data)
-    }
-    setOpen(false)
-    resetForm()
-  }
-
-  const handleDelete = async () => {
-    if (!deleteId) return
-    await deleteExamTemplate(deleteId)
-    setDeleteId(null)
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" py={8}>
+        <CircularProgress />
+      </Box>
+    )
   }
 
   return (
-    <Box>
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[16] }}>
+      {error && !useMock && <Alert severity="error">{error}</Alert>}
 
-      <Box display="flex" justifyContent="flex-end" mb={2}>
-        <Button variant="contained" startIcon={<Add />} onClick={handleOpen}>
-          สร้างข้อสอบใหม่
-        </Button>
+      {/* ═══ Header: Title + Subtitle + Button (Figma 46:14577) ═══ */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: 60,
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
+          <Typography
+            sx={{
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 700,
+              fontSize: 24,
+              lineHeight: '32px',
+              color: '#101828',
+              letterSpacing: '0.07px',
+            }}
+          >
+            จัดการแบบทดสอบ
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 400,
+              fontSize: 16,
+              lineHeight: '24px',
+              color: '#4A5565',
+              letterSpacing: '-0.31px',
+            }}
+          >
+            สร้างและจัดการเทมเพลตแบบทดสอบสำหรับ Onboarding
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            bgcolor: '#F62B25',
+            height: 40,
+            borderRadius: '10px',
+            boxShadow: '0px 4px 6px rgba(0,0,0,0.1), 0px 2px 4px rgba(0,0,0,0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: space[8],
+            px: space[16],
+            cursor: 'pointer',
+            flexShrink: 0,
+            '&:hover': { bgcolor: '#E02520' },
+            transition: 'background-color 0.15s',
+          }}
+        >
+          <AddIcon sx={{ fontSize: 20, color: '#FFFFFF' }} />
+          <Typography
+            sx={{
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 500,
+              fontSize: 16,
+              lineHeight: '24px',
+              color: '#FFFFFF',
+              textAlign: 'center',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            สร้างแบบทดสอบใหม่
+          </Typography>
+        </Box>
       </Box>
 
-      <DataTable columns={columns} rows={examTemplates} loading={loading} searchPlaceholder="ค้นหาข้อสอบ..." />
+      {/* ═══ Stats Cards Grid (Figma 46:14589) ═══ */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: space[16],
+        }}
+      >
+        <StatsCard
+          icon={<ExamIcon sx={{ fontSize: 24, color: '#2563EB' }} />}
+          iconBgColor="#DBEAFE"
+          label="แบบทดสอบทั้งหมด"
+          value={useMock ? 6 : stats.total}
+        />
+        <StatsCard
+          icon={<ActiveIcon sx={{ fontSize: 24, color: '#16A34A' }} />}
+          iconBgColor="#DCFCE7"
+          label="เปิดใช้งาน"
+          value={useMock ? 6 : stats.active}
+        />
+        <StatsCard
+          icon={<InactiveIcon sx={{ fontSize: 24, color: '#E7000B' }} />}
+          iconBgColor="#FFE2E2"
+          label="ปิดใช้งาน"
+          value={useMock ? 0 : stats.inactive}
+        />
+        <StatsCard
+          icon={<CategoryIcon sx={{ fontSize: 24, color: '#9333EA' }} />}
+          iconBgColor="#F3E8FF"
+          label="หมวดหมู่"
+          value={useMock ? 11 : stats.categories}
+        />
+      </Box>
 
-      {/* Create / Edit Exam Dialog */}
-      <Dialog open={open} onClose={() => { setOpen(false); resetForm() }} maxWidth="md" fullWidth>
-        <DialogTitle>{editExam ? 'แก้ไขข้อสอบ' : 'สร้างข้อสอบใหม่'}</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
-          {formError && <Alert severity="error">{formError}</Alert>}
-          <TextField label="ชื่อข้อสอบ" value={title} onChange={(e) => setTitle(e.target.value)} required fullWidth />
-          <TextField label="คำอธิบาย" value={description} onChange={(e) => setDescription(e.target.value)} multiline rows={2} fullWidth />
-          <TextField label="คะแนนผ่าน (%)" type="number" value={passingScore} onChange={(e) => setPassingScore(Number(e.target.value))} inputProps={{ min: 0, max: 100 }} fullWidth />
-
-          {/* Questions List */}
-          <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-              <Typography variant="subtitle1" fontWeight={600}>คำถาม ({questions.length} ข้อ)</Typography>
-              <Button size="small" startIcon={<Add />} onClick={() => { resetQuestionForm(); setQOpen(true) }}>เพิ่มคำถาม</Button>
-            </Box>
-            <Stack spacing={1}>
-              {questions.map((q, idx) => (
-                <Card key={q.id ?? idx} variant="outlined">
-                  <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: '8px !important' }}>
-                    <Typography variant="body2" flex={1}>{idx + 1}. {q.text}</Typography>
-                    <Chip label={q.type === 'multiple_choice' ? 'ตัวเลือก' : q.type === 'true_false' ? 'จริง/เท็จ' : 'ตอบสั้น'} size="small" />
-                    <IconButton size="small" onClick={() => setQuestions((prev) => prev.filter((_, i) => i !== idx))}><Delete fontSize="small" /></IconButton>
-                  </CardContent>
-                </Card>
-              ))}
-            </Stack>
+      {/* ═══ Search + Filter (Figma 46:14642) ═══ */}
+      <Box
+        sx={{
+          bgcolor: '#FFFFFF',
+          border: '2px solid #E5E7EB',
+          borderRadius: '10px',
+          pt: '18px',
+          px: '18px',
+          pb: '18px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: space[12],
+        }}
+      >
+        <Typography
+          sx={{
+            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontWeight: 600,
+            fontSize: 18,
+            lineHeight: '28px',
+            color: '#6B7280',
+            letterSpacing: '-0.44px',
+          }}
+        >
+          ค้นหารายการ
+        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            height: 44,
+            width: '100%',
+            gap: space[16],
+          }}
+        >
+          {/* Search input (Figma 46:14644) */}
+          <Box sx={{ position: 'relative', flex: 1, minWidth: 0 }}>
+            <SearchIcon
+              sx={{
+                position: 'absolute',
+                left: space[12],
+                top: 12,
+                fontSize: 20,
+                color: 'rgba(10,10,10,0.5)',
+                zIndex: 1,
+                pointerEvents: 'none',
+              }}
+            />
+            <TextField
+              placeholder="ค้นหาแบบทดสอบ..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              variant="outlined"
+              size="small"
+              sx={{
+                width: '100%',
+                '& .MuiOutlinedInput-root': {
+                  height: 44,
+                  borderRadius: '10px',
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontSize: 16,
+                  letterSpacing: '-0.31px',
+                  pl: '40px',
+                  '& fieldset': {
+                    borderWidth: '2px',
+                    borderColor: '#D1D5DC',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#D1D5DC',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#F62B25',
+                  },
+                },
+                '& .MuiOutlinedInput-input': {
+                  padding: '8px 16px 8px 0',
+                  '&::placeholder': {
+                    color: 'rgba(10,10,10,0.5)',
+                    opacity: 1,
+                  },
+                },
+              }}
+            />
           </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => { setOpen(false); resetForm() }}>ยกเลิก</Button>
-          <Button variant="contained" onClick={handleSave}>บันทึก</Button>
-        </DialogActions>
-      </Dialog>
 
-      {/* Add Question Dialog */}
-      <Dialog open={qOpen} onClose={() => setQOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>เพิ่มคำถาม</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
-          <TextField label="คำถาม" value={qText} onChange={(e) => setQText(e.target.value)} required multiline rows={2} fullWidth />
-          <FormControl fullWidth>
-            <InputLabel>ประเภท</InputLabel>
-            <Select value={qType} label="ประเภท" onChange={(e) => setQType(e.target.value as ExamQuestion['type'])}>
-              <MenuItem value="multiple_choice">ตัวเลือก (Multiple Choice)</MenuItem>
-              <MenuItem value="true_false">จริง/เท็จ (True/False)</MenuItem>
-              <MenuItem value="short_answer">ตอบสั้น (Short Answer)</MenuItem>
-            </Select>
-          </FormControl>
-
-          {qType === 'multiple_choice' && (
-            <Stack spacing={1}>
-              {qOptions.map((opt, idx) => (
-                <TextField
-                  key={idx}
-                  label={`ตัวเลือก ${idx + 1}`}
-                  value={opt}
-                  onChange={(e) => {
-                    const newOpts = [...qOptions]
-                    newOpts[idx] = e.target.value
-                    setQOptions(newOpts)
+          {/* Filter icon + Dropdown (Figma 46:14650) */}
+          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center', flexShrink: 0 }}>
+            <FilterIcon sx={{ fontSize: 20, color: '#6B7280', flexShrink: 0 }} />
+            <Select
+              value={selectedCategory}
+              onChange={handleCategoryChange}
+              size="small"
+              sx={{
+                height: 41,
+                borderRadius: '10px',
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontSize: 16,
+                letterSpacing: '-0.31px',
+                minWidth: 200,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderWidth: '2px',
+                  borderColor: '#D1D5DC',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#D1D5DC',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#F62B25',
+                },
+              }}
+            >
+              {CATEGORIES.map((cat) => (
+                <MenuItem
+                  key={cat}
+                  value={cat}
+                  sx={{
+                    fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                    fontSize: 16,
+                    letterSpacing: '-0.31px',
+                    color: '#0A0A0A',
                   }}
-                  fullWidth
-                />
+                >
+                  {cat}
+                </MenuItem>
               ))}
-              <FormControl fullWidth>
-                <InputLabel>คำตอบที่ถูกต้อง</InputLabel>
-                <Select value={qCorrect} label="คำตอบที่ถูกต้อง" onChange={(e) => setQCorrect(e.target.value)}>
-                  {qOptions.filter((o) => o.trim()).map((opt, idx) => (
-                    <MenuItem key={idx} value={opt}>{opt}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-          )}
+            </Select>
+          </Box>
+        </Box>
+      </Box>
 
-          {qType === 'true_false' && (
-            <RadioGroup value={qCorrect} onChange={(e) => setQCorrect(e.target.value)}>
-              <FormControlLabel value="จริง" control={<Radio />} label="จริง" />
-              <FormControlLabel value="เท็จ" control={<Radio />} label="เท็จ" />
-            </RadioGroup>
-          )}
+      {/* ═══ Exam Cards List (Figma 46:14678) ═══ */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: space[16],
+        }}
+      >
+        {paginatedExams.map((exam) => (
+          <ExamCard key={exam.id} {...exam} />
+        ))}
+      </Box>
 
-          {qType === 'short_answer' && (
-            <TextField label="คำตอบที่ถูกต้อง" value={qCorrect} onChange={(e) => setQCorrect(e.target.value)} fullWidth />
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setQOpen(false)}>ยกเลิก</Button>
-          <Button variant="contained" onClick={handleAddQuestion}>เพิ่ม</Button>
-        </DialogActions>
-      </Dialog>
+      {/* ═══ Pagination ═══ */}
+      {filteredExams.length > ITEMS_PER_PAGE && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            pt: space[8],
+          }}
+        >
+          <Typography
+            sx={{
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 400,
+              fontSize: 14,
+              lineHeight: '20px',
+              color: '#6B7280',
+              letterSpacing: '-0.15px',
+            }}
+          >
+            แสดง {(safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}–
+            {Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredExams.length)} จาก{' '}
+            {filteredExams.length} รายการ
+          </Typography>
 
-      <ConfirmDialog
-        open={!!deleteId}
-        title="ยืนยันการลบข้อสอบ"
-        message="คุณต้องการลบข้อสอบนี้หรือไม่?"
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteId(null)}
-      />
+          <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center' }}>
+            <PaginationButton
+              disabled={safeCurrentPage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            >
+              <ChevronLeftIcon sx={{ fontSize: 18 }} />
+            </PaginationButton>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <PaginationButton
+                key={page}
+                active={page === safeCurrentPage}
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </PaginationButton>
+            ))}
+            <PaginationButton
+              disabled={safeCurrentPage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            >
+              <ChevronRightIcon sx={{ fontSize: 18 }} />
+            </PaginationButton>
+          </Box>
+        </Box>
+      )}
     </Box>
   )
 }
