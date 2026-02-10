@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import { theme } from '@/theme'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { AuthProvider, MockAuthProvider } from '@/contexts/AuthContext'
 import { RoleGuard } from '@/guards/RoleGuard'
 import { LoginPage } from '@/pages/LoginPage'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
@@ -41,6 +41,16 @@ export function App() {
                 <RoleGuard allowedRoles={['employee']}>
                   <EmployeeDashboard />
                 </RoleGuard>
+              }
+            />
+
+            {/* Dev preview routes — mock data, no auth required */}
+            <Route
+              path="/preview/admin"
+              element={
+                <MockAuthProvider>
+                  <AdminDashboard />
+                </MockAuthProvider>
               }
             />
 

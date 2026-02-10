@@ -1,0 +1,356 @@
+-- CulturePassport — Supabase Schema & RLS Policies
+-- All tables created first, then helper function, then all policies
+
+-- ============================================================
+-- PART 1: CREATE ALL TABLES
+-- ============================================================
+
+CREATE TABLE public.companies (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  code text NOT NULL UNIQUE,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.departments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE RESTRICT,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_departments_company ON public.departments(company_id);
+
+CREATE TABLE public.positions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  department_id uuid NOT NULL REFERENCES public.departments(id) ON DELETE RESTRICT,
+  level int,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_positions_department ON public.positions(department_id);
+
+CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name text NOT NULL,
+  email text NOT NULL UNIQUE,
+  role text NOT NULL CHECK (role IN ('admin', 'manager', 'employee')),
+  company_id uuid REFERENCES public.companies(id),
+  department_id uuid REFERENCES public.departments(id),
+  position_id uuid REFERENCES public.positions(id),
+  avatar_url text,
+  probation_start date,
+  probation_end date,
+  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_profiles_role ON public.profiles(role);
+CREATE INDEX idx_profiles_department ON public.profiles(department_id);
+CREATE INDEX idx_profiles_company ON public.profiles(company_id);
+
+CREATE TABLE public.categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  description text,
+  color_code text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.missions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text NOT NULL,
+  category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+  estimated_duration text,
+  is_deleted boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_missions_category ON public.missions(category_id);
+CREATE INDEX idx_missions_not_deleted ON public.missions(is_deleted) WHERE is_deleted = false;
+
+CREATE TABLE public.user_missions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  mission_id uuid NOT NULL REFERENCES public.missions(id),
+  user_id uuid NOT NULL REFERENCES public.profiles(id),
+  status text NOT NULL DEFAULT 'not_started'
+    CHECK (status IN ('not_started','in_progress','submitted','approved','rejected','cancelled')),
+  submitted_content text,
+  submitted_file_url text,
+  feedback_score int CHECK (feedback_score BETWEEN 1 AND 10),
+  feedback_text text,
+  started_at timestamptz,
+  submitted_at timestamptz,
+  reviewed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (mission_id, user_id)
+);
+CREATE INDEX idx_user_missions_user ON public.user_missions(user_id);
+CREATE INDEX idx_user_missions_status ON public.user_missions(status);
+CREATE INDEX idx_user_missions_mission ON public.user_missions(mission_id);
+
+CREATE TABLE public.exam_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text,
+  passing_score int NOT NULL CHECK (passing_score BETWEEN 0 AND 100),
+  questions jsonb NOT NULL DEFAULT '[]',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.exam_scores (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  exam_template_id uuid NOT NULL REFERENCES public.exam_templates(id),
+  user_id uuid NOT NULL REFERENCES public.profiles(id),
+  score int NOT NULL,
+  total int NOT NULL,
+  passed boolean NOT NULL,
+  answers jsonb,
+  taken_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_exam_scores_user ON public.exam_scores(user_id);
+
+CREATE TABLE public.roadmap_milestones (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text,
+  target_day int NOT NULL,
+  sort_order int NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.announcements (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  content text NOT NULL,
+  is_active boolean NOT NULL DEFAULT true,
+  published_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.announcement_dismissals (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  announcement_id uuid NOT NULL REFERENCES public.announcements(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles(id),
+  dismissed_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (announcement_id, user_id)
+);
+CREATE INDEX idx_dismissals_user ON public.announcement_dismissals(user_id);
+
+-- ============================================================
+-- PART 2: HELPER FUNCTIONS
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS text
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT role FROM public.profiles WHERE id = auth.uid()
+$$;
+
+-- Auto-create profile on auth.users insert
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, email, role)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'role', 'employee')
+  );
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================================
+-- PART 3: ENABLE RLS ON ALL TABLES
+-- ============================================================
+
+ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.departments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.positions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.missions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_missions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exam_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.exam_scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.roadmap_milestones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.announcement_dismissals ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
+-- PART 4: ALL RLS POLICIES
+-- ============================================================
+
+-- companies
+CREATE POLICY "companies_select_authenticated" ON public.companies
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "companies_insert_admin" ON public.companies
+  FOR INSERT TO authenticated WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "companies_update_admin" ON public.companies
+  FOR UPDATE TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "companies_delete_admin" ON public.companies
+  FOR DELETE TO authenticated USING (public.get_my_role() = 'admin');
+
+-- departments
+CREATE POLICY "departments_select_authenticated" ON public.departments
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "departments_insert_admin" ON public.departments
+  FOR INSERT TO authenticated WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "departments_update_admin" ON public.departments
+  FOR UPDATE TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "departments_delete_admin" ON public.departments
+  FOR DELETE TO authenticated USING (public.get_my_role() = 'admin');
+
+-- positions
+CREATE POLICY "positions_select_authenticated" ON public.positions
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "positions_insert_admin" ON public.positions
+  FOR INSERT TO authenticated WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "positions_update_admin" ON public.positions
+  FOR UPDATE TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "positions_delete_admin" ON public.positions
+  FOR DELETE TO authenticated USING (public.get_my_role() = 'admin');
+
+-- profiles
+CREATE POLICY "profiles_select_admin" ON public.profiles
+  FOR SELECT TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "profiles_select_manager" ON public.profiles
+  FOR SELECT TO authenticated
+  USING (
+    public.get_my_role() = 'manager'
+    AND department_id = (SELECT department_id FROM public.profiles WHERE id = auth.uid())
+  );
+CREATE POLICY "profiles_select_self" ON public.profiles
+  FOR SELECT TO authenticated USING (id = auth.uid());
+CREATE POLICY "profiles_insert_admin" ON public.profiles
+  FOR INSERT TO authenticated WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "profiles_update_admin" ON public.profiles
+  FOR UPDATE TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "profiles_delete_admin" ON public.profiles
+  FOR DELETE TO authenticated USING (public.get_my_role() = 'admin');
+
+-- categories
+CREATE POLICY "categories_select_authenticated" ON public.categories
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "categories_insert_admin" ON public.categories
+  FOR INSERT TO authenticated WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "categories_update_admin" ON public.categories
+  FOR UPDATE TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "categories_delete_admin" ON public.categories
+  FOR DELETE TO authenticated USING (public.get_my_role() = 'admin');
+
+-- missions
+CREATE POLICY "missions_select_admin" ON public.missions
+  FOR SELECT TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "missions_select_employee" ON public.missions
+  FOR SELECT TO authenticated
+  USING (
+    public.get_my_role() = 'employee'
+    AND is_deleted = false
+    AND id IN (SELECT mission_id FROM public.user_missions WHERE user_id = auth.uid())
+  );
+CREATE POLICY "missions_insert_admin" ON public.missions
+  FOR INSERT TO authenticated WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "missions_update_admin" ON public.missions
+  FOR UPDATE TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "missions_delete_admin" ON public.missions
+  FOR DELETE TO authenticated USING (public.get_my_role() = 'admin');
+
+-- user_missions
+CREATE POLICY "user_missions_select_admin" ON public.user_missions
+  FOR SELECT TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "user_missions_select_manager" ON public.user_missions
+  FOR SELECT TO authenticated
+  USING (
+    public.get_my_role() = 'manager'
+    AND user_id IN (
+      SELECT id FROM public.profiles
+      WHERE department_id = (SELECT department_id FROM public.profiles WHERE id = auth.uid())
+    )
+  );
+CREATE POLICY "user_missions_select_self" ON public.user_missions
+  FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "user_missions_insert_admin" ON public.user_missions
+  FOR INSERT TO authenticated WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "user_missions_update_employee" ON public.user_missions
+  FOR UPDATE TO authenticated
+  USING (user_id = auth.uid() AND public.get_my_role() = 'employee');
+CREATE POLICY "user_missions_update_manager" ON public.user_missions
+  FOR UPDATE TO authenticated
+  USING (
+    public.get_my_role() = 'manager'
+    AND user_id IN (
+      SELECT id FROM public.profiles
+      WHERE department_id = (SELECT department_id FROM public.profiles WHERE id = auth.uid())
+    )
+  );
+
+-- exam_templates
+CREATE POLICY "exam_templates_select_admin" ON public.exam_templates
+  FOR SELECT TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "exam_templates_insert_admin" ON public.exam_templates
+  FOR INSERT TO authenticated WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "exam_templates_update_admin" ON public.exam_templates
+  FOR UPDATE TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "exam_templates_delete_admin" ON public.exam_templates
+  FOR DELETE TO authenticated USING (public.get_my_role() = 'admin');
+
+-- exam_scores
+CREATE POLICY "exam_scores_select_admin" ON public.exam_scores
+  FOR SELECT TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "exam_scores_select_manager" ON public.exam_scores
+  FOR SELECT TO authenticated
+  USING (
+    public.get_my_role() = 'manager'
+    AND user_id IN (
+      SELECT id FROM public.profiles
+      WHERE department_id = (SELECT department_id FROM public.profiles WHERE id = auth.uid())
+    )
+  );
+CREATE POLICY "exam_scores_select_self" ON public.exam_scores
+  FOR SELECT TO authenticated USING (user_id = auth.uid());
+
+-- roadmap_milestones
+CREATE POLICY "milestones_select_admin_employee" ON public.roadmap_milestones
+  FOR SELECT TO authenticated
+  USING (public.get_my_role() IN ('admin', 'employee'));
+CREATE POLICY "milestones_insert_admin" ON public.roadmap_milestones
+  FOR INSERT TO authenticated WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "milestones_update_admin" ON public.roadmap_milestones
+  FOR UPDATE TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "milestones_delete_admin" ON public.roadmap_milestones
+  FOR DELETE TO authenticated USING (public.get_my_role() = 'admin');
+
+-- announcements
+CREATE POLICY "announcements_select_admin" ON public.announcements
+  FOR SELECT TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "announcements_select_active" ON public.announcements
+  FOR SELECT TO authenticated
+  USING (
+    public.get_my_role() IN ('manager', 'employee')
+    AND is_active = true
+  );
+CREATE POLICY "announcements_insert_admin" ON public.announcements
+  FOR INSERT TO authenticated WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "announcements_update_admin" ON public.announcements
+  FOR UPDATE TO authenticated USING (public.get_my_role() = 'admin');
+CREATE POLICY "announcements_delete_admin" ON public.announcements
+  FOR DELETE TO authenticated USING (public.get_my_role() = 'admin');
+
+-- announcement_dismissals
+CREATE POLICY "dismissals_select_self" ON public.announcement_dismissals
+  FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "dismissals_insert_self" ON public.announcement_dismissals
+  FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());

@@ -1,19 +1,22 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
-  Card,
-  CardContent,
   TextField,
   Button,
   Typography,
   Alert,
   CircularProgress,
   Stack,
+  InputAdornment,
+  IconButton,
+  Link,
 } from '@mui/material'
+import { Email, Lock, Visibility, VisibilityOff, Login as LoginIcon } from '@mui/icons-material'
 import { useAuth } from '@/hooks/useAuth'
-import { colors } from '@/theme'
 import type { UserRole } from '@/types'
+
+const RED = '#F62B25'
 
 const roleHomePaths: Record<UserRole, string> = {
   admin: '/admin',
@@ -28,12 +31,14 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
-  // Already logged in → redirect to dashboard
-  if (session && role) {
-    navigate(roleHomePaths[role], { replace: true })
-    return null
-  }
+  // Redirect when session + role are ready
+  useEffect(() => {
+    if (session && role) {
+      navigate(roleHomePaths[role], { replace: true })
+    }
+  }, [session, role, navigate])
 
   const isFormValid = email.trim().length > 0 && password.length > 0
 
@@ -52,15 +57,7 @@ export function LoginPage() {
       return
     }
 
-    // Auth state change listener in AuthContext will update profile/role
-    // Wait briefly for profile to load, then redirect
-    const checkAndRedirect = () => {
-      // Re-read from supabase session to get role
-      // The onAuthStateChange in AuthContext handles this
-      // We'll rely on the component re-rendering with updated role
-    }
-    checkAndRedirect()
-    setLoading(false)
+    // Keep loading=true until useEffect redirect fires
   }
 
   return (
@@ -70,61 +67,246 @@ export function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `linear-gradient(135deg, ${colors.red[600]} 0%, ${colors.red[800]} 100%)`,
+        background: 'linear-gradient(147deg, #F9FAFB 0%, #FFFFFF 50%, #F9FAFB 100%)',
         px: 2,
+        py: 4,
       }}
     >
-      <Card sx={{ maxWidth: 420, width: '100%' }}>
-        <CardContent sx={{ p: 4 }}>
-          <Stack spacing={3} alignItems="center">
-            <Typography variant="h4" fontWeight={700} color="primary">
-              CulturePassport
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              ระบบติดตามการเข้าปรับตัวพนักงานใหม่
-            </Typography>
+      <Box sx={{ width: 448 }}>
+        {/* Logo & Branding */}
+        <Stack spacing={2} alignItems="center" mb={4}>
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="CulturePassport"
+            sx={{ width: 64, height: 64, objectFit: 'contain' }}
+          />
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: 30,
+              lineHeight: '36px',
+              color: RED,
+              letterSpacing: '0.4px',
+              textAlign: 'center',
+            }}
+          >
+            CulturePassport
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 14,
+              lineHeight: '20px',
+              color: '#4A5565',
+              letterSpacing: '-0.15px',
+              textAlign: 'center',
+            }}
+          >
+            ระบบติดตามการเข้าปรับตัวพนักงานใหม่
+          </Typography>
+        </Stack>
 
-            {error && (
-              <Alert severity="error" sx={{ width: '100%' }}>
-                {error}
-              </Alert>
-            )}
+        {/* Login Card */}
+        <Box
+          sx={{
+            bgcolor: '#FFFFFF',
+            border: '1px solid #F3F4F6',
+            borderRadius: '16px',
+            boxShadow: '0px 10px 15px rgba(0,0,0,0.1), 0px 4px 6px rgba(0,0,0,0.1)',
+            px: '33px',
+            pt: '33px',
+            pb: '33px',
+          }}
+        >
+          {/* Card Header */}
+          <Stack spacing={1} alignItems="center" mb={3}>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: 24,
+                lineHeight: '32px',
+                color: RED,
+                letterSpacing: '0.07px',
+                textAlign: 'center',
+              }}
+            >
+              กรอกข้อมูลเพื่อเข้าใช้งาน
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 14,
+                lineHeight: '20px',
+                color: '#4A5565',
+                letterSpacing: '-0.15px',
+                textAlign: 'center',
+              }}
+            >
+              ใช้อีเมลและรหัสผ่านของคุณเพื่อเข้าสู่ระบบ
+            </Typography>
+          </Stack>
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-              <Stack spacing={2}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {/* Form */}
+          <Box component="form" onSubmit={handleSubmit}>
+            <Stack spacing="20px">
+              {/* Email */}
+              <Box>
+                <Typography
+                  sx={{
+                    fontWeight: 500,
+                    fontSize: 14,
+                    lineHeight: '20px',
+                    color: '#364153',
+                    letterSpacing: '-0.15px',
+                    mb: 1,
+                  }}
+                >
+                  อีเมล
+                </Typography>
                 <TextField
-                  label="อีเมล"
                   type="email"
+                  placeholder="example@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   fullWidth
                   autoComplete="email"
                   autoFocus
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Email sx={{ color: '#9CA3AF', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '10px',
+                      height: 50,
+                      '& fieldset': { borderColor: '#D1D5DC' },
+                    },
+                    '& .MuiInputBase-input': {
+                      fontSize: 16,
+                      letterSpacing: '-0.31px',
+                    },
+                    '& .MuiInputBase-input::placeholder': {
+                      color: 'rgba(10,10,10,0.5)',
+                      opacity: 1,
+                    },
+                  }}
                 />
+              </Box>
+
+              {/* Password */}
+              <Box>
+                <Typography
+                  sx={{
+                    fontWeight: 500,
+                    fontSize: 14,
+                    lineHeight: '20px',
+                    color: '#364153',
+                    letterSpacing: '-0.15px',
+                    mb: 1,
+                  }}
+                >
+                  รหัสผ่าน
+                </Typography>
                 <TextField
-                  label="รหัสผ่าน"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   fullWidth
                   autoComplete="current-password"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Lock sx={{ color: '#9CA3AF', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                          size="small"
+                          sx={{ color: '#9CA3AF' }}
+                        >
+                          {showPassword ? <VisibilityOff sx={{ fontSize: 20 }} /> : <Visibility sx={{ fontSize: 20 }} />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '10px',
+                      height: 50,
+                      '& fieldset': { borderColor: '#D1D5DC' },
+                    },
+                    '& .MuiInputBase-input': {
+                      fontSize: 16,
+                      letterSpacing: '-0.31px',
+                    },
+                    '& .MuiInputBase-input::placeholder': {
+                      color: 'rgba(10,10,10,0.5)',
+                      opacity: 1,
+                    },
+                  }}
                 />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  fullWidth
-                  disabled={!isFormValid || loading}
+              </Box>
+
+              {/* Forgot password */}
+              <Box textAlign="right">
+                <Link
+                  component="button"
+                  type="button"
+                  underline="none"
+                  sx={{
+                    fontWeight: 500,
+                    fontSize: 14,
+                    lineHeight: '20px',
+                    color: RED,
+                    letterSpacing: '-0.15px',
+                  }}
                 >
-                  {loading ? <CircularProgress size={24} color="inherit" /> : 'เข้าสู่ระบบ'}
-                </Button>
-              </Stack>
-            </Box>
-          </Stack>
-        </CardContent>
-      </Card>
+                  ลืมรหัสผ่าน?
+                </Link>
+              </Box>
+
+              {/* Submit */}
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                disabled={!isFormValid || loading}
+                startIcon={!loading && <LoginIcon />}
+                sx={{
+                  height: 48,
+                  borderRadius: '10px',
+                  bgcolor: RED,
+                  fontWeight: 600,
+                  fontSize: 16,
+                  letterSpacing: '-0.31px',
+                  textTransform: 'none',
+                  boxShadow: 'none',
+                  '&:hover': {
+                    bgcolor: '#E02520',
+                    boxShadow: 'none',
+                  },
+                }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'เข้าสู่ระบบ'}
+              </Button>
+            </Stack>
+          </Box>
+        </Box>
+      </Box>
     </Box>
   )
 }

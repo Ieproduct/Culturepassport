@@ -1,7 +1,6 @@
-import { useState, type SyntheticEvent } from 'react'
-import { Box, Tabs, Tab, Typography, Container } from '@mui/material'
+import { useState, type SyntheticEvent, type ReactNode } from 'react'
+import { Box, Tabs, Tab, Typography } from '@mui/material'
 import {
-  Dashboard as DashboardIcon,
   People as PeopleIcon,
   Assignment as AssignmentIcon,
   AssignmentTurnedIn as AssignIcon,
@@ -11,9 +10,16 @@ import {
   Map as MapIcon,
   Campaign as CampaignIcon,
   FileDownload as ExportIcon,
+  Person as PersonIcon,
+  Badge as BadgeIcon,
+  Business as BusinessIcon,
+  AccountTree as DepartmentIcon,
+  Work as PositionIcon,
+  Leaderboard as LevelIcon,
 } from '@mui/icons-material'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
-import { colors } from '@/theme'
+import { IconCategory } from '@/components/icons/IconCategory'
+import { useAuth } from '@/hooks/useAuth'
 import { OverviewTab } from './OverviewTab'
 import { UsersTab } from './UsersTab'
 import { MissionsTab } from './MissionsTab'
@@ -25,21 +31,84 @@ import { RoadmapTab } from './RoadmapTab'
 import { AnnouncementsTab } from './AnnouncementsTab'
 import { ExportTab } from './ExportTab'
 
+/* ─── Tabs: Figma labels + icons ─── */
 const tabs = [
-  { label: 'ภาพรวม', icon: <DashboardIcon /> },
-  { label: 'จัดการผู้ใช้', icon: <PeopleIcon /> },
-  { label: 'จัดการ Mission', icon: <AssignmentIcon /> },
-  { label: 'มอบหมาย', icon: <AssignIcon /> },
-  { label: 'ข้อสอบ', icon: <QuizIcon /> },
+  { label: 'ภาพรวม', icon: <IconCategory variant="solid" /> },
+  { label: 'ผู้ใช้งานทั้งหมด', icon: <PeopleIcon /> },
+  { label: 'ภารกิจทั้งหมด', icon: <AssignmentIcon /> },
+  { label: 'มอบหมายภารกิจ', icon: <AssignIcon /> },
+  { label: 'สร้างแบบทดสอบ/ภารกิจ', icon: <QuizIcon /> },
   { label: 'ข้อมูลหลัก', icon: <StorageIcon /> },
-  { label: 'สร้างบัญชี', icon: <PersonAddIcon /> },
-  { label: 'Roadmap', icon: <MapIcon /> },
-  { label: 'ประกาศ', icon: <CampaignIcon /> },
+  { label: 'สร้างบัญชีผู้ใช้', icon: <PersonAddIcon /> },
+  { label: 'ตั้งค่าแผนการ', icon: <MapIcon /> },
+  { label: 'ตั้งค่าประกาศ', icon: <CampaignIcon /> },
   { label: 'ส่งออกข้อมูล', icon: <ExportIcon /> },
 ]
 
+/* ─── Info chip in hero banner (Figma 32:13240–32:13306) ─── */
+function InfoChip({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <Box sx={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <Box
+        sx={{
+          width: 28,
+          height: 28,
+          borderRadius: '10px',
+          bgcolor: '#FFFFFF',
+          boxShadow: '0px 1px 3px rgba(0,0,0,0.1), 0px 1px 2px rgba(0,0,0,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Box sx={{ color: '#E7000B', fontSize: 16, display: 'flex' }}>{icon}</Box>
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography
+          sx={{
+            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontWeight: 400,
+            fontSize: 12,
+            lineHeight: '16px',
+            color: '#FFFFFF',
+          }}
+        >
+          {label}
+        </Typography>
+        <Typography
+          sx={{
+            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontWeight: 600,
+            fontSize: 14,
+            lineHeight: '20px',
+            color: '#FFFFFF',
+            letterSpacing: '-0.15px',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {value}
+        </Typography>
+      </Box>
+    </Box>
+  )
+}
+
+/* ─── Mock data matching Figma exactly ─── */
+const MOCK_HERO = {
+  fullName: 'สมชาย ผู้ดูแล',
+  employeeId: '2345678',
+  company: 'บริษัท เทคโนโลยี จำกัด (มหาชน)',
+  department: 'ทรัพยากรบุคคล',
+  position: 'HR Manager',
+  level: 'Manager/Teamlead',
+}
+
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState(0)
+  const { profile } = useAuth()
 
   const handleTabChange = (_: SyntheticEvent, newValue: number) => {
     setActiveTab(newValue)
@@ -47,37 +116,111 @@ export function AdminDashboard() {
 
   return (
     <DashboardLayout>
-      {/* Red Gradient Header */}
+      {/* ═══ Red Gradient Hero Container (Figma 32:13234) ═══ */}
       <Box
         sx={{
-          background: `linear-gradient(135deg, ${colors.red[600]} 0%, ${colors.red[800]} 100%)`,
-          color: 'white',
-          py: 4,
-          px: 3,
-          mx: { xs: -2, sm: -3 },
-          mt: -3,
-          mb: 3,
+          background: 'linear-gradient(170.6deg, #E7000B 0%, #C10007 50%, #A50036 100%)',
+          borderRadius: '10px',
+          boxShadow: '0px 10px 15px rgba(0,0,0,0.1), 0px 4px 6px rgba(0,0,0,0.1)',
+          pt: '32px',
+          px: '32px',
+          pb: 0,
+          mb: '24px',
         }}
       >
-        <Container maxWidth="lg">
-          <Typography variant="h4" fontWeight={700}>
-            แดชบอร์ดผู้ดูแลระบบ
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
-            จัดการระบบ CulturePassport ทั้งหมด
-          </Typography>
-        </Container>
+        <Typography
+          sx={{
+            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontWeight: 700,
+            fontSize: 30,
+            lineHeight: '36px',
+            color: '#FFFFFF',
+            letterSpacing: '0.4px',
+            textShadow: '0px 3px 6px rgba(0,0,0,0.12)',
+          }}
+        >
+          แดชบอร์ดผู้ดูแลระบบ
+        </Typography>
+
+        <Typography
+          sx={{
+            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontWeight: 400,
+            fontSize: 16,
+            lineHeight: '24px',
+            color: '#FFFFFF',
+            letterSpacing: '-0.31px',
+            mt: '8px',
+          }}
+        >
+          จัดการระบบและส่งออกข้อมูล
+        </Typography>
+
+        <Box
+          sx={{
+            borderTop: '1px solid #FFFFFF',
+            mt: '8px',
+            pt: '16px',
+            pb: '16px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: { xs: '12px', md: '16px' },
+          }}
+        >
+          <InfoChip icon={<PersonIcon sx={{ fontSize: 16 }} />} label="ชื่อ-นามสกุล" value={profile?.full_name ?? MOCK_HERO.fullName} />
+          <InfoChip icon={<BadgeIcon sx={{ fontSize: 16 }} />} label="รหัสพนักงาน" value={MOCK_HERO.employeeId} />
+          <InfoChip icon={<BusinessIcon sx={{ fontSize: 16 }} />} label="บริษัท" value={MOCK_HERO.company} />
+          <InfoChip icon={<DepartmentIcon sx={{ fontSize: 16 }} />} label="แผนก" value={MOCK_HERO.department} />
+          <InfoChip icon={<PositionIcon sx={{ fontSize: 16 }} />} label="ตำแหน่ง" value={MOCK_HERO.position} />
+          <InfoChip icon={<LevelIcon sx={{ fontSize: 16 }} />} label="ระดับตำแหน่ง" value={MOCK_HERO.level} />
+        </Box>
       </Box>
 
-      <Container maxWidth="lg">
+      {/* ═══ Tabs Section (Figma 32:13307) — with icons, fill width ═══ */}
+      <Box
+        sx={{
+          borderBottom: '1px solid #E5E7EB',
+          pb: '1px',
+          mb: '24px',
+          width: '100%',
+        }}
+      >
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
           variant="scrollable"
           scrollButtons="auto"
+          TabIndicatorProps={{
+            sx: { height: '2px', bgcolor: '#F62B25' },
+          }}
           sx={{
-            mb: 3,
-            '& .MuiTab-root': { minHeight: 48 },
+            minHeight: 42,
+            '& .MuiTabScrollButton-root.Mui-disabled': {
+              display: 'none',
+            },
+            '& .MuiTabs-flexContainer': {
+              gap: '8px',
+            },
+            '& .MuiTab-root': {
+              minHeight: 42,
+              minWidth: 'auto',
+              px: '8px',
+              py: '8px',
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 500,
+              fontSize: 16,
+              lineHeight: '24px',
+              letterSpacing: '-0.31px',
+              textTransform: 'none',
+              color: '#4A5565',
+              '&.Mui-selected': {
+                color: '#F62B25',
+              },
+              '& .MuiTab-iconWrapper': {
+                fontSize: 20,
+                mr: '6px',
+              },
+            },
           }}
         >
           {tabs.map((tab, index) => (
@@ -86,24 +229,25 @@ export function AdminDashboard() {
               label={tab.label}
               icon={tab.icon}
               iconPosition="start"
-              sx={{ textTransform: 'none', fontWeight: 500 }}
+              disableRipple
             />
           ))}
         </Tabs>
+      </Box>
 
-        <Box>
-          {activeTab === 0 && <OverviewTab />}
-          {activeTab === 1 && <UsersTab />}
-          {activeTab === 2 && <MissionsTab />}
-          {activeTab === 3 && <AssignTab />}
-          {activeTab === 4 && <ExamsTab />}
-          {activeTab === 5 && <MasterDataTab />}
-          {activeTab === 6 && <CreateAccountTab />}
-          {activeTab === 7 && <RoadmapTab />}
-          {activeTab === 8 && <AnnouncementsTab />}
-          {activeTab === 9 && <ExportTab />}
-        </Box>
-      </Container>
+      {/* ═══ Tab Content — fills remaining layout ═══ */}
+      <Box sx={{ flexGrow: 1, width: '100%' }}>
+        {activeTab === 0 && <OverviewTab />}
+        {activeTab === 1 && <UsersTab />}
+        {activeTab === 2 && <MissionsTab />}
+        {activeTab === 3 && <AssignTab />}
+        {activeTab === 4 && <ExamsTab />}
+        {activeTab === 5 && <MasterDataTab />}
+        {activeTab === 6 && <CreateAccountTab />}
+        {activeTab === 7 && <RoadmapTab />}
+        {activeTab === 8 && <AnnouncementsTab />}
+        {activeTab === 9 && <ExportTab />}
+      </Box>
     </DashboardLayout>
   )
 }
