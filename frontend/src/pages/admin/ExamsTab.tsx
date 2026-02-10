@@ -13,8 +13,6 @@ import {
   Search as SearchIcon,
   Add as AddIcon,
   Visibility as ViewIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
   FilterList as FilterIcon,
   Description as ExamIcon,
   CheckCircle as ActiveIcon,
@@ -23,9 +21,12 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material'
+import { IconEdit } from '@/components/icons/IconEdit'
+import { IconDelete } from '@/components/icons/IconDelete'
+import { IconChevronLeft } from '@/components/icons/IconChevronLeft'
 import { space } from '@/theme/spacing'
 import { useExams } from '@/hooks/useExams'
-import { CreateExamForm } from './CreateExamForm'
+import { CreateExamForm, type ExamInitialData } from './CreateExamForm'
 
 const ITEMS_PER_PAGE = 10
 
@@ -60,6 +61,92 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   'อื่นๆ': { bg: '#F3F4F6', text: '#364153' },
 }
 const DEFAULT_CATEGORY_COLOR = { bg: '#F3F4F6', text: '#364153' }
+
+/* ─── Mock question type ─── */
+type MockQuestion = {
+  type: 'multiple_choice' | 'essay'
+  text: string
+  options: [string, string, string, string]
+  correctAnswer: number | null
+}
+
+/* ─── Mock questions for exam-1 (Figma 52:81339) ─── */
+const MOCK_QUESTIONS: Record<string, MockQuestion[]> = {
+  'exam-1': [
+    {
+      type: 'multiple_choice',
+      text: 'อะไรคือสิ่งสำคัญที่สุดในการรักษาความปลอดภัยของข้อมูล?',
+      options: [
+        'ใช้รหัสผ่านที่แข็งแกร่งและไม่แชร์ให้ผู้อื่น',
+        'ใช้รหัสผ่านเดียวกันทุกระบบเพื่อความสะดวก',
+        'เขียนรหัสผ่านไว้บน Post-it',
+        'แชร์รหัสผ่านกับเพื่อนร่วมงานที่ใกล้ชิด',
+      ],
+      correctAnswer: 0,
+    },
+    {
+      type: 'multiple_choice',
+      text: 'ถ้าคุณได้รับอีเมลที่ดูน่าสงสัยจากคนที่ไม่รู้จัก คุณควรทำอย่างไร?',
+      options: [
+        'เปิดดูและคลิกลิงก์เพื่อดูว่าเป็นอะไร',
+        'ลบทิ้งและรายงานให้ IT ทราบ',
+        'ส่งต่อให้เพื่อนร่วมงาน',
+        'ตอบกลับเพื่อถามว่าเป็นใคร',
+      ],
+      correctAnswer: 1,
+    },
+    {
+      type: 'essay',
+      text: 'การทำงานในพื้นที่สาธารณะ (เช่น ร้านกาแฟ) ควรระวังอะไรมากที่สุด?',
+      options: ['', '', '', ''],
+      correctAnswer: null,
+    },
+    {
+      type: 'essay',
+      text: 'ระยะเวลาในการเปลี่ยนรหัสผ่านที่แนะนำคือทุกๆ กี่เดือน?',
+      options: ['', '', '', ''],
+      correctAnswer: null,
+    },
+    {
+      type: 'essay',
+      text: 'USB ที่เจอตามพื้นในออฟฟิศ ควรทำอย่างไร?',
+      options: ['', '', '', ''],
+      correctAnswer: null,
+    },
+    {
+      type: 'essay',
+      text: 'Two-Factor Authentication (2FA) คืออะไร?',
+      options: ['', '', '', ''],
+      correctAnswer: null,
+    },
+    {
+      type: 'essay',
+      text: 'Phishing คืออะไร?',
+      options: ['', '', '', ''],
+      correctAnswer: null,
+    },
+    {
+      type: 'essay',
+      text: 'การสำรองข้อมูล (Backup) ควรทำบ่อยแค่ไหน?',
+      options: ['', '', '', ''],
+      correctAnswer: null,
+    },
+    {
+      type: 'essay',
+      text: 'Wi-Fi สาธารณะที่ไม่มีรหัสผ่าน มีความเสี่ยงอย่างไร?',
+      options: ['', '', '', ''],
+      correctAnswer: null,
+    },
+    {
+      type: 'essay',
+      text: 'ถ้าคุณสงสัยว่าบัญชีของคุณถูกแฮก ควรทำอย่างไรเป็นอันดับแรก?',
+      options: ['', '', '', ''],
+      correctAnswer: null,
+    },
+  ],
+}
+
+const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const
 
 /* ─── Mock data matching Figma 46:14678 exactly ─── */
 const MOCK_EXAMS = [
@@ -244,6 +331,9 @@ function ExamCard({
   duration,
   passingScore,
   isActive,
+  onView,
+  onEdit,
+  onDelete,
 }: {
   title: string
   description: string
@@ -252,6 +342,9 @@ function ExamCard({
   duration: number
   passingScore: number
   isActive: boolean
+  onView?: () => void
+  onEdit?: () => void
+  onDelete?: () => void
 }) {
   const catColor = CATEGORY_COLORS[category] ?? DEFAULT_CATEGORY_COLOR
 
@@ -261,9 +354,7 @@ function ExamCard({
         bgcolor: '#FFFFFF',
         border: '2px solid #E5E7EB',
         borderRadius: '10px',
-        pt: '26px',
-        px: '26px',
-        pb: '26px',
+        p: { xs: '16px', sm: '26px' },
         display: 'flex',
         flexDirection: 'column',
         gap: space[8],
@@ -281,7 +372,7 @@ function ExamCard({
         {/* Left: title, badge, description, meta */}
         <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: space[8] }}>
           {/* Title + Status badge */}
-          <Box sx={{ display: 'flex', gap: space[12], alignItems: 'center', height: 28 }}>
+          <Box sx={{ display: 'flex', gap: space[12], alignItems: 'center', flexWrap: 'wrap' }}>
             <Typography
               sx={{
                 fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
@@ -334,7 +425,7 @@ function ExamCard({
           </Typography>
 
           {/* Meta row */}
-          <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', height: 28, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: { xs: space[8], sm: space[4] }, alignItems: 'center', flexWrap: 'wrap', rowGap: space[8] }}>
             {/* Category */}
             <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center' }}>
               <Typography
@@ -375,7 +466,7 @@ function ExamCard({
             </Box>
 
             {/* Question count */}
-            <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: space[12] }}>
+            <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: { xs: 0, sm: space[12] } }}>
               <Typography
                 sx={{
                   fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
@@ -403,7 +494,7 @@ function ExamCard({
             </Box>
 
             {/* Duration */}
-            <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: space[12] }}>
+            <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: { xs: 0, sm: space[12] } }}>
               <Typography
                 sx={{
                   fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
@@ -431,7 +522,7 @@ function ExamCard({
             </Box>
 
             {/* Passing score */}
-            <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: space[12] }}>
+            <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: { xs: 0, sm: space[12] } }}>
               <Typography
                 sx={{
                   fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
@@ -471,9 +562,9 @@ function ExamCard({
             ml: space[16],
           }}
         >
-          <ActionButton icon={<ViewIcon sx={{ fontSize: 20, color: '#6B7280' }} />} />
-          <ActionButton icon={<EditIcon sx={{ fontSize: 20, color: '#6B7280' }} />} />
-          <ActionButton icon={<DeleteIcon sx={{ fontSize: 20, color: '#6B7280' }} />} />
+          <ActionButton icon={<ViewIcon sx={{ fontSize: 20, color: '#6B7280' }} />} onClick={onView} />
+          <ActionButton icon={<IconEdit variant="solid" sx={{ fontSize: 16, color: '#6B7280' }} />} onClick={onEdit} />
+          <ActionButton icon={<IconDelete variant="solid" sx={{ fontSize: 16, color: '#6B7280' }} />} onClick={onDelete} />
         </Box>
       </Box>
     </Box>
@@ -529,18 +620,24 @@ function PaginationButton({
   )
 }
 
-export function ExamsTab() {
-  const { examTemplates, loading, error } = useExams()
-  const [searchText, setSearchText] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('ทุกหมวดหมู่')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [showCreateForm, setShowCreateForm] = useState(false)
+/* ─── Display exam type ─── */
+type DisplayExam = {
+  id: string
+  title: string
+  description: string
+  category: string
+  questionCount: number
+  duration: number
+  passingScore: number
+  isActive: boolean
+}
 
-  /* Use real data if available, otherwise fall back to mock */
-  const useMock = examTemplates.length === 0 && !loading
-
-  /* Build display list */
-  type DisplayExam = {
+/* ─── Exam Detail View (Figma 52:81339) ─── */
+function ExamDetailView({
+  exam,
+  onBack,
+}: {
+  exam: {
     id: string
     title: string
     description: string
@@ -548,22 +645,480 @@ export function ExamsTab() {
     questionCount: number
     duration: number
     passingScore: number
-    isActive: boolean
   }
+  onBack: () => void
+}) {
+  const catColor = CATEGORY_COLORS[exam.category] ?? DEFAULT_CATEGORY_COLOR
+  const questions = MOCK_QUESTIONS[exam.id] ?? []
 
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[16] }}>
+      {/* ═══ Header: Back icon + Title ═══ */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: space[12],
+          minHeight: 60,
+        }}
+      >
+        <Box
+          onClick={onBack}
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            '&:hover': { bgcolor: '#F3F4F6' },
+            transition: 'background-color 0.15s',
+          }}
+        >
+          <IconChevronLeft variant="solid" sx={{ fontSize: 24, color: '#364153' }} />
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
+          <Typography
+            sx={{
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 700,
+              fontSize: 24,
+              lineHeight: '32px',
+              color: '#101828',
+              letterSpacing: '0.07px',
+            }}
+          >
+            {exam.title}
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 400,
+              fontSize: 16,
+              lineHeight: '24px',
+              color: '#4A5565',
+              letterSpacing: '-0.31px',
+            }}
+          >
+            ดูรายละเอียดแบบทดสอบ
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ═══ ข้อมูลทั่วไป card ═══ */}
+      <Box
+        sx={{
+          bgcolor: '#FFFFFF',
+          border: '2px solid #E5E7EB',
+          borderRadius: '10px',
+          p: { xs: '16px', sm: '26px' },
+          display: 'flex',
+          flexDirection: 'column',
+          gap: space[16],
+        }}
+      >
+        <Typography
+          sx={{
+            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontWeight: 600,
+            fontSize: 18,
+            lineHeight: '27px',
+            letterSpacing: '-0.44px',
+            color: '#101828',
+          }}
+        >
+          ข้อมูลทั่วไป
+        </Typography>
+
+        {/* 2x2 grid info rows */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            gap: space[12],
+          }}
+        >
+          {/* หมวดหมู่ */}
+          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center' }}>
+            <Typography
+              sx={{
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontWeight: 500,
+                fontSize: 14,
+                lineHeight: '20px',
+                color: '#6B7280',
+                flexShrink: 0,
+              }}
+            >
+              หมวดหมู่:
+            </Typography>
+            <Box
+              sx={{
+                bgcolor: catColor.bg,
+                borderRadius: '4px',
+                height: 28,
+                display: 'inline-flex',
+                alignItems: 'center',
+                px: space[8],
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontWeight: 400,
+                  fontSize: 14,
+                  lineHeight: '20px',
+                  color: catColor.text,
+                }}
+              >
+                {exam.category}
+              </Typography>
+            </Box>
+          </Box>
+          {/* จำนวนข้อ */}
+          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center' }}>
+            <Typography
+              sx={{
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontWeight: 500,
+                fontSize: 14,
+                lineHeight: '20px',
+                color: '#6B7280',
+              }}
+            >
+              จำนวนข้อ:
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontWeight: 500,
+                fontSize: 14,
+                lineHeight: '20px',
+                color: '#101828',
+              }}
+            >
+              {exam.questionCount} ข้อ
+            </Typography>
+          </Box>
+          {/* ระยะเวลา */}
+          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center' }}>
+            <Typography
+              sx={{
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontWeight: 500,
+                fontSize: 14,
+                lineHeight: '20px',
+                color: '#6B7280',
+              }}
+            >
+              ระยะเวลา:
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontWeight: 500,
+                fontSize: 14,
+                lineHeight: '20px',
+                color: '#101828',
+              }}
+            >
+              {exam.duration} นาที
+            </Typography>
+          </Box>
+          {/* คะแนนผ่าน */}
+          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center' }}>
+            <Typography
+              sx={{
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontWeight: 500,
+                fontSize: 14,
+                lineHeight: '20px',
+                color: '#6B7280',
+              }}
+            >
+              คะแนนผ่าน:
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontWeight: 500,
+                fontSize: 14,
+                lineHeight: '20px',
+                color: '#101828',
+              }}
+            >
+              {exam.passingScore}%
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* คำอธิบาย */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
+          <Typography
+            sx={{
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 500,
+              fontSize: 14,
+              lineHeight: '20px',
+              color: '#6B7280',
+            }}
+          >
+            คำอธิบาย:
+          </Typography>
+          <Typography
+            sx={{
+              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontWeight: 400,
+              fontSize: 14,
+              lineHeight: '20px',
+              color: '#364153',
+            }}
+          >
+            {exam.description}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ═══ คำถามทั้งหมด ═══ */}
+      <Box
+        sx={{
+          bgcolor: '#FFFFFF',
+          border: '2px solid #E5E7EB',
+          borderRadius: '10px',
+          p: { xs: '16px', sm: '26px' },
+          display: 'flex',
+          flexDirection: 'column',
+          gap: space[16],
+        }}
+      >
+        <Typography
+          sx={{
+            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontWeight: 600,
+            fontSize: 18,
+            lineHeight: '27px',
+            letterSpacing: '-0.44px',
+            color: '#101828',
+          }}
+        >
+          คำถามทั้งหมด
+        </Typography>
+
+        {/* Question list */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[16] }}>
+          {questions.map((q, idx) => {
+            const isMultiple = q.type === 'multiple_choice'
+            return (
+              <Box
+                key={idx}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: space[12],
+                }}
+              >
+                {/* Question header: number + text + badge */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: space[8], flexWrap: 'wrap' }}>
+                  <Typography
+                    sx={{
+                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                      fontWeight: 500,
+                      fontSize: 16,
+                      lineHeight: '24px',
+                      letterSpacing: '-0.31px',
+                      color: '#101828',
+                    }}
+                  >
+                    {`${idx + 1}. ${q.text}`}
+                  </Typography>
+                  <Box
+                    sx={{
+                      bgcolor: isMultiple ? '#DBEAFE' : '#F3E8FF',
+                      borderRadius: '9999px',
+                      height: 20,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      px: space[8],
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                        fontWeight: 400,
+                        fontSize: 12,
+                        lineHeight: '16px',
+                        color: isMultiple ? '#1447E6' : '#8200DB',
+                      }}
+                    >
+                      {isMultiple ? 'ปรนัย' : 'ข้อเขียน'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Answer content */}
+                {isMultiple ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[6] }}>
+                    {OPTION_LABELS.map((letter, optIdx) => {
+                      const isCorrect = q.correctAnswer === optIdx
+                      return (
+                        <Box
+                          key={letter}
+                          sx={{
+                            bgcolor: isCorrect ? '#F0FDF4' : 'transparent',
+                            border: isCorrect ? '1px solid #7BF1A8' : '1px solid transparent',
+                            borderRadius: '8px',
+                            px: space[12],
+                            py: space[6],
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: space[8],
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                              fontWeight: isCorrect ? 500 : 400,
+                              fontSize: 14,
+                              lineHeight: '20px',
+                              color: isCorrect ? '#00A63E' : '#4A5565',
+                            }}
+                          >
+                            {`${letter}. ${q.options[optIdx]}`}
+                          </Typography>
+                          {isCorrect && (
+                            <Box
+                              sx={{
+                                bgcolor: '#00A63E',
+                                borderRadius: '9999px',
+                                height: 20,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                px: space[8],
+                                flexShrink: 0,
+                              }}
+                            >
+                              <Typography
+                                sx={{
+                                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                                  fontWeight: 500,
+                                  fontSize: 12,
+                                  lineHeight: '16px',
+                                  color: '#FFFFFF',
+                                }}
+                              >
+                                คำตอบที่ถูกต้อง
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      )
+                    })}
+                  </Box>
+                ) : (
+                  /* Essay answer preview */
+                  <Box
+                    sx={{
+                      bgcolor: '#FAF5FF',
+                      border: '1px solid #E9D4FF',
+                      borderRadius: '8px',
+                      p: space[12],
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: space[4],
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                        fontWeight: 500,
+                        fontSize: 14,
+                        lineHeight: '20px',
+                        color: '#8200DB',
+                      }}
+                    >
+                      📝 คำตอบแบบข้อเขียน
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                        fontWeight: 400,
+                        fontSize: 12,
+                        lineHeight: '16px',
+                        color: '#A855F7',
+                      }}
+                    >
+                      จำกัดความยาว: คำ
+                    </Typography>
+                    <Box
+                      sx={{
+                        bgcolor: '#FFFFFF',
+                        border: '1px solid #E9D4FF',
+                        borderRadius: '6px',
+                        p: space[8],
+                        mt: space[4],
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                          fontWeight: 400,
+                          fontSize: 14,
+                          lineHeight: '20px',
+                          color: 'rgba(10,10,10,0.4)',
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        พนักงานพิมพ์คำตอบที่นี่...
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Divider between questions */}
+                {idx < questions.length - 1 && (
+                  <Box sx={{ height: '1px', bgcolor: '#E5E7EB', mt: space[4] }} />
+                )}
+              </Box>
+            )
+          })}
+        </Box>
+      </Box>
+    </Box>
+  )
+}
+
+export function ExamsTab() {
+  const { examTemplates, loading, error } = useExams()
+  const [searchText, setSearchText] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('ทุกหมวดหมู่')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [editingExam, setEditingExam] = useState<ExamInitialData | null>(null)
+  const [viewingExam, setViewingExam] = useState<DisplayExam | null>(null)
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
+
+  /* Use real data if available, otherwise fall back to mock */
+  const useMock = examTemplates.length === 0 && !loading
+
+  /* Build display list */
   const displayExams: DisplayExam[] = useMemo(() => {
-    if (useMock) return MOCK_EXAMS
-    return examTemplates.map((e) => ({
-      id: e.id,
-      title: e.title,
-      description: e.description ?? '',
-      category: 'อื่นๆ',
-      questionCount: e.questions?.length ?? 0,
-      duration: 15,
-      passingScore: e.passing_score,
-      isActive: true,
-    }))
-  }, [useMock, examTemplates])
+    const raw = useMock
+      ? MOCK_EXAMS
+      : examTemplates.map((e) => ({
+          id: e.id,
+          title: e.title,
+          description: e.description ?? '',
+          category: 'อื่นๆ',
+          questionCount: e.questions?.length ?? 0,
+          duration: 15,
+          passingScore: e.passing_score,
+          isActive: true,
+        }))
+    return raw.filter((e) => !deletedIds.has(e.id))
+  }, [useMock, examTemplates, deletedIds])
 
   /* Compute stats from display exams */
   const stats = useMemo(() => {
@@ -608,6 +1163,24 @@ export function ExamsTab() {
     setSelectedCategory(event.target.value)
   }
 
+  const handleEdit = (exam: DisplayExam) => {
+    setEditingExam({
+      id: exam.id,
+      title: exam.title,
+      description: exam.description,
+      category: exam.category,
+    })
+    setShowCreateForm(true)
+  }
+
+  const handleView = (exam: DisplayExam) => {
+    setViewingExam(exam)
+  }
+
+  const handleDelete = (examId: string) => {
+    setDeletedIds((prev) => new Set(prev).add(examId))
+  }
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" py={8}>
@@ -616,9 +1189,27 @@ export function ExamsTab() {
     )
   }
 
-  /* Show create form when user clicks "สร้างแบบทดสอบใหม่" */
+  /* Show exam detail view */
+  if (viewingExam) {
+    return (
+      <ExamDetailView
+        exam={viewingExam}
+        onBack={() => setViewingExam(null)}
+      />
+    )
+  }
+
+  /* Show create/edit form */
   if (showCreateForm) {
-    return <CreateExamForm onCancel={() => setShowCreateForm(false)} />
+    return (
+      <CreateExamForm
+        onCancel={() => {
+          setShowCreateForm(false)
+          setEditingExam(null)
+        }}
+        initialData={editingExam ?? undefined}
+      />
+    )
   }
 
   return (
@@ -629,9 +1220,11 @@ export function ExamsTab() {
       <Box
         sx={{
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
           justifyContent: 'space-between',
-          height: 60,
+          gap: space[12],
+          minHeight: 60,
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
@@ -662,7 +1255,7 @@ export function ExamsTab() {
         </Box>
 
         <Box
-          onClick={() => setShowCreateForm(true)}
+          onClick={() => { setEditingExam(null); setShowCreateForm(true) }}
           sx={{
             bgcolor: '#F62B25',
             height: 40,
@@ -699,7 +1292,9 @@ export function ExamsTab() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: '1fr',
+          '@media (min-width: 350px)': { gridTemplateColumns: '1fr 1fr' },
+          '@media (min-width: 900px)': { gridTemplateColumns: 'repeat(4, 1fr)' },
           gap: space[16],
         }}
       >
@@ -758,8 +1353,8 @@ export function ExamsTab() {
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'center',
-            height: 44,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
             width: '100%',
             gap: space[16],
           }}
@@ -815,7 +1410,7 @@ export function ExamsTab() {
           </Box>
 
           {/* Filter icon + Dropdown (Figma 46:14650) */}
-          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center', flexShrink: 0 }}>
+          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center', flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>
             <FilterIcon sx={{ fontSize: 20, color: '#6B7280', flexShrink: 0 }} />
             <Select
               value={selectedCategory}
@@ -828,6 +1423,7 @@ export function ExamsTab() {
                 fontSize: 16,
                 letterSpacing: '-0.31px',
                 minWidth: 200,
+                width: { xs: '100%', sm: 'auto' },
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderWidth: '2px',
                   borderColor: '#D1D5DC',
@@ -868,7 +1464,13 @@ export function ExamsTab() {
         }}
       >
         {paginatedExams.map((exam) => (
-          <ExamCard key={exam.id} {...exam} />
+          <ExamCard
+            key={exam.id}
+            {...exam}
+            onView={() => handleView(exam)}
+            onEdit={() => handleEdit(exam)}
+            onDelete={() => handleDelete(exam.id)}
+          />
         ))}
       </Box>
 
@@ -877,8 +1479,10 @@ export function ExamsTab() {
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'center', sm: 'center' },
             justifyContent: 'space-between',
+            gap: space[8],
             pt: space[8],
           }}
         >
