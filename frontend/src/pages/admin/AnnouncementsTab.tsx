@@ -88,7 +88,7 @@ export function AnnouncementsTab() {
                 <FormControlLabel
                   control={<IOSSwitch checked={a.is_active} onChange={() => handleToggleActive(a.id, a.is_active)} />}
                   label={a.is_active ? 'Active' : 'Inactive'}
-                  sx={{ minWidth: 120 }}
+                  sx={{ minWidth: 120, gap: '8px' }}
                 />
                 <IconButton size="small" onClick={() => handleEdit(a)}><Edit fontSize="small" /></IconButton>
                 <IconButton size="small" onClick={() => setDeleteId(a.id)}><Delete fontSize="small" /></IconButton>
