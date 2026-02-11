@@ -9,7 +9,7 @@ import {
   Storage as DatabaseIcon,
 } from '@mui/icons-material'
 import { space } from '@/theme/spacing'
-import { supabase } from '@/lib/supabase'
+import { useServices } from '@/services'
 
 type Stats = {
   totalEmployees: number
@@ -276,6 +276,7 @@ function ActivityRow({ name, mission, date, score }: { name: string; mission: st
 }
 
 export function OverviewTab() {
+  const { admin: adminService } = useServices()
   const [_stats, setStats] = useState<Stats>({ totalEmployees: 0, totalMissions: 0, completionRate: 0, pendingCount: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -283,24 +284,8 @@ export function OverviewTab() {
   useEffect(() => {
     async function loadStats() {
       try {
-        const [profilesRes, missionsRes, userMissionsRes] = await Promise.all([
-          supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'employee').eq('status', 'active'),
-          supabase.from('missions').select('id', { count: 'exact', head: true }).eq('is_deleted', false),
-          supabase.from('user_missions').select('id, status'),
-        ])
-
-        if (profilesRes.error) throw profilesRes.error
-        if (missionsRes.error) throw missionsRes.error
-        if (userMissionsRes.error) throw userMissionsRes.error
-
-        const totalEmployees = profilesRes.count ?? 0
-        const totalMissions = missionsRes.count ?? 0
-        const allUserMissions = userMissionsRes.data ?? []
-        const approved = allUserMissions.filter((um) => um.status === 'approved').length
-        const completionRate = allUserMissions.length > 0 ? Math.round((approved / allUserMissions.length) * 100) : 0
-        const pendingCount = allUserMissions.filter((um) => um.status === 'submitted').length
-
-        setStats({ totalEmployees, totalMissions, completionRate, pendingCount })
+        const stats = await adminService.getOverviewStats()
+        setStats(stats)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'โหลดข้อมูลไม่สำเร็จ')
       } finally {
@@ -308,7 +293,7 @@ export function OverviewTab() {
       }
     }
     loadStats()
-  }, [])
+  }, [adminService])
 
   if (loading) {
     return (

@@ -3,6 +3,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { theme } from '@/theme'
+import { ServiceProvider } from '@/services'
 import { AuthProvider, MockAuthProvider } from '@/contexts/AuthContext'
 import { RoleGuard } from '@/guards/RoleGuard'
 import { LoginPage } from '@/pages/LoginPage'
@@ -15,6 +16,7 @@ export function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <ServiceProvider>
       <BrowserRouter>
         <AuthProvider>
           <Routes>
@@ -61,6 +63,7 @@ export function App() {
           </Routes>
         </AuthProvider>
       </BrowserRouter>
+      </ServiceProvider>
       </LocalizationProvider>
     </ThemeProvider>
   )

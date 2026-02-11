@@ -22,7 +22,7 @@ import { FileUpload } from '@/components/common/FileUpload'
 import { EmptyState } from '@/components/common/EmptyState'
 import { useAuth } from '@/hooks/useAuth'
 import { useUserMissions } from '@/hooks/useUserMissions'
-import { getSignedUrl } from '@/utils/storageHelpers'
+import { useServices } from '@/services'
 import type { UserMission } from '@/types'
 
 const statusOrder: Record<string, number> = {
@@ -36,6 +36,7 @@ const statusOrder: Record<string, number> = {
 
 export function MissionsTab() {
   const { profile } = useAuth()
+  const { storage: storageService } = useServices()
   const { userMissions, loading, startMission, submitMission, fetchUserMissions } = useUserMissions(profile?.id)
   const [selectedMission, setSelectedMission] = useState<UserMission | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -151,7 +152,7 @@ export function MissionsTab() {
                   if (path.startsWith('http')) {
                     window.open(path, '_blank')
                   } else {
-                    const url = await getSignedUrl('mission-deliverables', path)
+                    const url = await storageService.getSignedUrl('mission-deliverables', path)
                     if (url) window.open(url, '_blank')
                   }
                 }}

@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useServices } from '@/services'
 import type { Company, Department, Position } from '@/types'
 
 export function useCascadingFilter() {
+  const { masterData } = useServices()
   const [companies, setCompanies] = useState<Company[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [positions, setPositions] = useState<Position[]>([])
@@ -15,32 +16,25 @@ export function useCascadingFilter() {
   // Fetch companies on mount
   useEffect(() => {
     setLoading(true)
-    supabase.from('companies').select('*').order('name').then(({ data, error: e }) => {
-      if (e) setError(e.message)
-      setCompanies(data ?? [])
-      setLoading(false)
-    })
-  }, [])
+    masterData.fetchCompanies()
+      .then((data: Company[]) => setCompanies(data))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed'))
+      .finally(() => setLoading(false))
+  }, [masterData])
 
   // Fetch departments when company changes
   useEffect(() => {
-    let query = supabase.from('departments').select('*').order('name')
-    if (selectedCompany) query = query.eq('company_id', selectedCompany)
-    query.then(({ data, error: e }) => {
-      if (e) setError(e.message)
-      setDepartments(data ?? [])
-    })
-  }, [selectedCompany])
+    masterData.fetchDepartments(selectedCompany ?? undefined)
+      .then((data: Department[]) => setDepartments(data))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed'))
+  }, [masterData, selectedCompany])
 
   // Fetch positions when department changes
   useEffect(() => {
-    let query = supabase.from('positions').select('*').order('name')
-    if (selectedDepartment) query = query.eq('department_id', selectedDepartment)
-    query.then(({ data, error: e }) => {
-      if (e) setError(e.message)
-      setPositions(data ?? [])
-    })
-  }, [selectedDepartment])
+    masterData.fetchPositions(selectedDepartment ?? undefined)
+      .then((data: Position[]) => setPositions(data))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed'))
+  }, [masterData, selectedDepartment])
 
   const setSelectedCompany = useCallback((value: string | null) => {
     setSelectedCompanyState(value)

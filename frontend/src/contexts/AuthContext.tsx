@@ -1,13 +1,13 @@
 import { createContext, useEffect, useState, useCallback, type ReactNode } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { useServices } from '@/services'
 import type { Profile, UserRole } from '@/types'
+import type { AuthSessionData, AuthEvent } from '@/services/types'
 
 const PROFILE_FETCH_TIMEOUT = 5000
 
 export type AuthState = {
-  session: Session | null
-  user: User | null
+  session: AuthSessionData | null
+  user: AuthSessionData['user'] | null
   profile: Profile | null
   role: UserRole | null
   loading: boolean
@@ -49,70 +49,69 @@ function buildFallbackProfile(userId: string, email: string, meta: Record<string
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [user, setUser] = useState<User | null>(null)
+  const { auth } = useServices()
+  const [session, setSession] = useState<AuthSessionData | null>(null)
+  const [user, setUser] = useState<AuthSessionData['user'] | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = useCallback(async (userId: string, email: string, userMeta?: Record<string, unknown>) => {
     try {
       const result = await withTimeout(
-        Promise.resolve(supabase.from('profiles').select('*').eq('id', userId).single()),
+        auth.fetchProfile(userId),
         PROFILE_FETCH_TIMEOUT,
-      ) as { data: Profile | null; error: unknown }
-      if (!result.error && result.data) return result.data
+      )
+      if (result) return result
     } catch {
       // timeout or network error — fall through to fallback
     }
     if (userMeta) return buildFallbackProfile(userId, email, userMeta)
     return null
-  }, [])
+  }, [auth])
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+    auth.getSession().then(async (result: { session: AuthSessionData | null }) => {
+      const s = result.session
       setSession(s)
       setUser(s?.user ?? null)
       if (s?.user) {
-        const p = await fetchProfile(s.user.id, s.user.email ?? '', s.user.user_metadata)
+        const p = await fetchProfile(s.user.id, s.user.email, s.user.user_metadata)
         setProfile(p)
       }
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, s) => {
+    const { unsubscribe } = auth.onAuthStateChange(
+      async (event: AuthEvent, s: AuthSessionData | null) => {
         setSession(s)
         setUser(s?.user ?? null)
 
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && s?.user) {
-          const p = await fetchProfile(s.user.id, s.user.email ?? '', s.user.user_metadata)
+          const p = await fetchProfile(s.user.id, s.user.email, s.user.user_metadata)
           setProfile(p)
         }
 
         if (event === 'SIGNED_OUT') {
           setProfile(null)
         }
-      }
+      },
     )
 
-    return () => subscription.unsubscribe()
-  }, [fetchProfile])
+    return () => unsubscribe()
+  }, [auth, fetchProfile])
 
   const login = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.toLowerCase().trim(),
-      password,
-    })
+    const { error } = await auth.signInWithPassword(email, password)
     if (error) return { error: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' }
     return { error: null }
-  }, [])
+  }, [auth])
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut()
+    await auth.signOut()
     setSession(null)
     setUser(null)
     setProfile(null)
-  }, [])
+  }, [auth])
 
   const role = profile?.role ?? null
 
@@ -142,8 +141,8 @@ const MOCK_PROFILE: Profile = {
 
 export function MockAuthProvider({ children }: { children: ReactNode }) {
   const mockState: AuthState = {
-    session: {} as Session,
-    user: {} as User,
+    session: { user: { id: 'mock-admin-001', email: 'admin@culturepassport.dev', user_metadata: {} } },
+    user: { id: 'mock-admin-001', email: 'admin@culturepassport.dev', user_metadata: {} },
     profile: MOCK_PROFILE,
     role: 'admin',
     loading: false,

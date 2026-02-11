@@ -13,7 +13,7 @@ import {
   type SvgIconProps,
 } from '@mui/material'
 import { VisibilityOff as VisibilityOffIcon } from '@mui/icons-material'
-import { supabase } from '@/lib/supabase'
+import { useServices } from '@/services'
 
 /* ═══════════════════════════════════════════════════════════
    Constants
@@ -684,6 +684,7 @@ function FormField({
    Component
    ═══════════════════════════════════════════════════════════ */
 export function CreateAccountTab() {
+  const { admin: adminService } = useServices()
   /* ─── Form state ─── */
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -779,22 +780,17 @@ export function CreateAccountTab() {
       // In preview mode (no real Supabase), skip the API call
       const isPreview = window.location.pathname.startsWith('/preview')
       if (!isPreview) {
-        const { data, error: fnError } = await supabase.functions.invoke('create-user', {
-          body: {
-            email: email.trim(),
-            password: generatedPassword,
-            full_name: fullName.trim(),
-            role: 'employee',
-            company_name: company,
-            department_name: department,
-            position_name: position,
-            level_name: level,
-            approver_name: approver,
-          },
+        await adminService.createUser({
+          email: email.trim(),
+          password: generatedPassword,
+          full_name: fullName.trim(),
+          role: 'employee',
+          company_name: company,
+          department_name: department,
+          position_name: position,
+          level_name: level,
+          approver_name: approver,
         })
-
-        if (fnError) throw fnError
-        if (data?.error) throw new Error(data.error)
       }
 
       setModalData(submittedData)

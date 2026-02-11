@@ -1,16 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useServices } from '@/services'
 import type { Profile } from '@/types'
+import type { ProfileFilters } from '@/services/types'
 
-type ProfileFilters = {
-  companyId?: string
-  departmentId?: string
-  positionId?: string
-  search?: string
-  role?: string
-}
+export type { ProfileFilters }
 
 export function useProfiles() {
+  const { profiles: profilesService } = useServices()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -19,47 +15,36 @@ export function useProfiles() {
     setLoading(true)
     setError(null)
     try {
-      let query = supabase.from('profiles').select('*').order('created_at', { ascending: false })
-
-      if (filters?.companyId) query = query.eq('company_id', filters.companyId)
-      if (filters?.departmentId) query = query.eq('department_id', filters.departmentId)
-      if (filters?.positionId) query = query.eq('position_id', filters.positionId)
-      if (filters?.role) query = query.eq('role', filters.role as 'admin' | 'manager' | 'employee')
-      if (filters?.search) query = query.or(`full_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`)
-
-      const { data, error: fetchError } = await query
-      if (fetchError) throw fetchError
-      setProfiles(data ?? [])
+      const data = await profilesService.fetchProfiles(filters)
+      setProfiles(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch profiles')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [profilesService])
 
   const updateProfile = useCallback(async (id: string, updates: Partial<Profile>) => {
     setError(null)
     try {
-      const { error: updateError } = await supabase.from('profiles').update(updates).eq('id', id)
-      if (updateError) throw updateError
+      await profilesService.updateProfile(id, updates)
       await fetchProfiles()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update profile')
       throw err
     }
-  }, [fetchProfiles])
+  }, [profilesService, fetchProfiles])
 
   const deleteProfile = useCallback(async (id: string) => {
     setError(null)
     try {
-      const { error: updateError } = await supabase.from('profiles').update({ status: 'inactive' }).eq('id', id)
-      if (updateError) throw updateError
+      await profilesService.deactivateProfile(id)
       await fetchProfiles()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete profile')
       throw err
     }
-  }, [fetchProfiles])
+  }, [profilesService, fetchProfiles])
 
   useEffect(() => { fetchProfiles() }, [fetchProfiles])
 

@@ -29,18 +29,12 @@ import { StatsCard } from '@/components/common/StatsCard'
 import { CascadingFilter } from '@/components/common/CascadingFilter'
 import { EmptyState } from '@/components/common/EmptyState'
 import { useCascadingFilter } from '@/hooks/useCascadingFilter'
-import { supabase } from '@/lib/supabase'
+import { useServices } from '@/services'
 import { colors } from '@/theme'
-import type { Profile } from '@/types'
-
-type TeamMember = Profile & {
-  total_missions: number
-  completed_missions: number
-  pending_review: number
-  progress_percent: number
-}
+import type { TeamMember } from '@/services/types'
 
 export function TeamOverviewTab() {
+  const { admin: adminService } = useServices()
   const cascading = useCascadingFilter()
   const [members, setMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
@@ -56,43 +50,12 @@ export function TeamOverviewTab() {
     setLoading(true)
     setError(null)
     try {
-    let query = supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'employee')
-      .eq('status', 'active')
-
-    if (cascading.selectedCompany) query = query.eq('company_id', cascading.selectedCompany)
-    if (cascading.selectedDepartment) query = query.eq('department_id', cascading.selectedDepartment)
-    if (cascading.selectedPosition) query = query.eq('position_id', cascading.selectedPosition)
-
-    const { data: profiles } = await query
-
-    if (!profiles) { setLoading(false); return }
-
-    // Fetch mission stats for each member
-    const enriched: TeamMember[] = await Promise.all(
-      profiles.map(async (p) => {
-        const { data: missions } = await supabase
-          .from('user_missions')
-          .select('status')
-          .eq('user_id', p.id)
-
-        const total = missions?.length ?? 0
-        const completed = missions?.filter((m) => m.status === 'approved').length ?? 0
-        const pending = missions?.filter((m) => m.status === 'submitted').length ?? 0
-
-        return {
-          ...p,
-          total_missions: total,
-          completed_missions: completed,
-          pending_review: pending,
-          progress_percent: total > 0 ? Math.round((completed / total) * 100) : 0,
-        }
+      const data = await adminService.fetchTeamMembers({
+        companyId: cascading.selectedCompany ?? undefined,
+        departmentId: cascading.selectedDepartment ?? undefined,
+        positionId: cascading.selectedPosition ?? undefined,
       })
-    )
-
-    setMembers(enriched)
+      setMembers(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'โหลดข้อมูลทีมไม่สำเร็จ')
     } finally {
@@ -101,27 +64,8 @@ export function TeamOverviewTab() {
   }
 
   const handleViewExamScores = async (memberId: string) => {
-    const { data } = await supabase
-      .from('exam_scores')
-      .select('*')
-      .eq('user_id', memberId)
-      .order('taken_at', { ascending: false })
-
-    const scores = data ?? []
-    const templateIds = [...new Set(scores.map((s) => s.exam_template_id))]
-    const { data: templates } = templateIds.length > 0
-      ? await supabase.from('exam_templates').select('id, title').in('id', templateIds)
-      : { data: [] }
-    const templateMap = new Map((templates ?? []).map((t) => [t.id, t.title]))
-
-    setExamScores(
-      scores.map((s) => ({
-        title: templateMap.get(s.exam_template_id) ?? 'Exam',
-        score: s.score,
-        total: s.total,
-        passed: s.passed,
-      }))
-    )
+    const scores = await adminService.fetchMemberExamScores(memberId)
+    setExamScores(scores)
     setExamModalOpen(true)
   }
 

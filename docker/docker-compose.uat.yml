@@ -1,0 +1,18 @@
+# CulturePassport — UAT environment overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.uat.yml --env-file .env.uat up -d
+
+services:
+  postgres:
+    ports:
+      - "5441:5432"
+
+  minio:
+    ports:
+      - "9020:9000"
+      - "9021:9001"
+
+  backend:
+    ports:
+      - "9000:3000"
+    environment:
+      NODE_ENV: production
