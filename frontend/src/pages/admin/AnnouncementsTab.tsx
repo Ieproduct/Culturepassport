@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Typography, Card, CardContent, IconButton, Stack, Switch, FormControlLabel } from '@mui/material'
+import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Typography, Card, CardContent, IconButton, Stack, FormControlLabel } from '@mui/material'
+import { IOSSwitch } from '@/components/common/IOSSwitch'
 import { Add, Delete, Edit } from '@mui/icons-material'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useAnnouncements } from '@/hooks/useAnnouncements'
@@ -85,7 +86,7 @@ export function AnnouncementsTab() {
                   </Typography>
                 </Box>
                 <FormControlLabel
-                  control={<Switch checked={a.is_active} onChange={() => handleToggleActive(a.id, a.is_active)} />}
+                  control={<IOSSwitch checked={a.is_active} onChange={() => handleToggleActive(a.id, a.is_active)} />}
                   label={a.is_active ? 'Active' : 'Inactive'}
                   sx={{ minWidth: 120 }}
                 />
