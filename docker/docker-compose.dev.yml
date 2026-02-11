@@ -1,0 +1,18 @@
+# CulturePassport — DEV environment overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  postgres:
+    ports:
+      - "5440:5432"
+
+  minio:
+    ports:
+      - "9010:9000"
+      - "9011:9001"
+
+  backend:
+    ports:
+      - "8000:3000"
+    environment:
+      NODE_ENV: development

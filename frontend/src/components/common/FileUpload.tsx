@@ -1,7 +1,7 @@
 import { useState, useRef, type ChangeEvent } from 'react'
 import { Box, Typography, Button, LinearProgress } from '@mui/material'
 import { CloudUpload as UploadIcon } from '@mui/icons-material'
-import { supabase } from '@/lib/supabase'
+import { useServices } from '@/services'
 
 type FileUploadProps = {
   bucketName: string
@@ -22,6 +22,7 @@ export function FileUpload({
   acceptedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.png'],
   isPublicBucket = false,
 }: FileUploadProps) {
+  const { storage: storageService } = useServices()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -55,19 +56,18 @@ export function FileUpload({
       const ext = selectedFile.name.split('.').pop()
       const fileName = `${filePath}.${ext}`
 
-      const { data, error } = await supabase.storage
-        .from(bucketName)
-        .upload(fileName, selectedFile, { cacheControl: '3600', upsert: false })
-
-      if (error) throw error
+      const { path } = await storageService.upload(bucketName, fileName, selectedFile, {
+        cacheControl: '3600',
+        upsert: false,
+      })
 
       setProgress(100)
       if (isPublicBucket) {
-        const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(data.path)
-        onUploadComplete(urlData.publicUrl)
+        const publicUrl = storageService.getPublicUrl(bucketName, path)
+        onUploadComplete(publicUrl)
       } else {
-        // For private buckets, store the path — consumers use getStorageUrl() to create signed URLs
-        onUploadComplete(data.path)
+        // For private buckets, store the path — consumers use getSignedUrl() to create signed URLs
+        onUploadComplete(path)
       }
       setSelectedFile(null)
       if (fileInputRef.current) fileInputRef.current.value = ''

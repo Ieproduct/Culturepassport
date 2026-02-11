@@ -9,9 +9,9 @@ import {
   Cached as ClearIcon,
 } from '@mui/icons-material'
 import { space } from '@/theme/spacing'
-import { supabase } from '@/lib/supabase'
 import { useProfiles } from '@/hooks/useProfiles'
 import { useCascadingFilter } from '@/hooks/useCascadingFilter'
+import { useServices } from '@/services'
 
 /* ─── Constants ─── */
 const ROLE_OPTIONS = [
@@ -88,6 +88,7 @@ function FilterLabel({ icon, children }: { icon: React.ReactNode; children: Reac
 }
 
 export function UsersTab() {
+  const { profiles: profilesService } = useServices()
   const { profiles, loading, error, fetchProfiles } = useProfiles()
   const filter = useCascadingFilter()
 
@@ -97,12 +98,10 @@ export function UsersTab() {
 
   /* Fetch total count on mount */
   useEffect(() => {
-    supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'active')
-      .then(({ count }) => setTotalCount(count ?? 0))
-  }, [])
+    profilesService.fetchProfiles()
+      .then((data) => setTotalCount(data.filter((p) => p.status === 'active').length))
+      .catch(() => {})
+  }, [profilesService])
 
   /* Re-fetch profiles when server-side filters change */
   useEffect(() => {

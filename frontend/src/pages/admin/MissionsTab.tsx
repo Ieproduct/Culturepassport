@@ -3,14 +3,11 @@ import { Box, Typography, TextField, CircularProgress, Alert } from '@mui/materi
 import {
   Search as SearchIcon,
   Visibility as EyeIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material'
 import { space } from '@/theme/spacing'
 import { useMissions } from '@/hooks/useMissions'
-import { supabase } from '@/lib/supabase'
-
-const ITEMS_PER_PAGE = 10
+import { useServices } from '@/services'
+import { colors } from '@/theme'
 
 /* ─── Category color map (Figma 45:14119–45:14174) ─── */
 const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string }> = {
@@ -20,154 +17,6 @@ const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string
   'ทีมและการสื่อสาร': { bg: '#F3E8FF', border: '#E9D4FF', text: '#8200DB' },
 }
 const DEFAULT_CATEGORY_COLOR = { bg: '#F3F4F6', border: '#E5E7EB', text: '#364153' }
-
-/* ─── Mock data matching Figma 45:14107–45:14214 exactly ─── */
-const MOCK_MISSIONS = [
-  {
-    id: 'mock-1',
-    title: 'อ่านคู่มือพนักงานใหม่',
-    description: 'อ่านและทำความเข้าใจคู่มือพนักงานใหม่ทั้งหมด รวมถึงนโยบายและระเบียบข้อบังคับของบริษัท',
-    categoryName: 'วัฒนธรรมองค์กร',
-    maxScore: 100,
-    assignedCount: 0,
-  },
-  {
-    id: 'mock-2',
-    title: 'ทำแบบทดสอบความปลอดภัย',
-    description: 'ทำแบบทดสอบเกี่ยวกับความปลอดภัยในที่ทำงานและนโยบายความมั่นคงปลอดภัยทางไซเบอร์',
-    categoryName: 'ความปลอดภัยและนโยบาย',
-    maxScore: 100,
-    assignedCount: 0,
-  },
-  {
-    id: 'mock-3',
-    title: 'ตั้งค่าอุปกรณ์และบัญชีผู้ใช้',
-    description: 'ตั้งค่าคอมพิวเตอร์ บัญชีอีเมล และเครื่องมือการทำงานต่างๆ ที่จำเป็น',
-    categoryName: 'เทคนิคการทำงาน',
-    maxScore: 100,
-    assignedCount: 3,
-  },
-  {
-    id: 'mock-4',
-    title: 'พบปะทีมงาน',
-    description: 'แนะนำตัวและพบปะกับสมาชิกในทีม เข้าร่วมการประชุมทีมครั้งแรก',
-    categoryName: 'ทีมและการสื่อสาร',
-    maxScore: 100,
-    assignedCount: 21,
-  },
-  {
-    id: 'mock-5',
-    title: 'เรียนรู้ระบบและเครื่องมือ',
-    description: 'ศึกษาระบบและเครื่องมือที่ใช้ในการทำงาน เช่น Git, Jira, Slack',
-    categoryName: 'เทคนิคการทำงาน',
-    maxScore: 100,
-    assignedCount: 21,
-  },
-  {
-    id: 'mock-6',
-    title: 'ทำข้อสอบอบรมข้อเขียน',
-    description: 'ทำแบบทดสอบข้อเขียนเพื่อประเมินความเข้าใจและการประยุกต์ใช้ความรู้',
-    categoryName: 'วัฒนธรรมองค์กร',
-    maxScore: 100,
-    assignedCount: 21,
-  },
-  {
-    id: 'mock-7',
-    title: 'เข้าร่วมปฐมนิเทศ',
-    description: 'เข้าร่วมกิจกรรมปฐมนิเทศพนักงานใหม่ รับฟังนโยบายบริษัทและแนะนำทีมผู้บริหาร',
-    categoryName: 'วัฒนธรรมองค์กร',
-    maxScore: 100,
-    assignedCount: 18,
-  },
-  {
-    id: 'mock-8',
-    title: 'ศึกษาแผนผังองค์กร',
-    description: 'ทำความเข้าใจโครงสร้างองค์กร แผนกต่างๆ และสายการบังคับบัญชา',
-    categoryName: 'ทีมและการสื่อสาร',
-    maxScore: 100,
-    assignedCount: 15,
-  },
-  {
-    id: 'mock-9',
-    title: 'ทดสอบระบบดับเพลิง',
-    description: 'เข้าร่วมการฝึกซ้อมดับเพลิงและอพยพหนีไฟประจำปี พร้อมทำแบบทดสอบหลังการฝึก',
-    categoryName: 'ความปลอดภัยและนโยบาย',
-    maxScore: 100,
-    assignedCount: 21,
-  },
-  {
-    id: 'mock-10',
-    title: 'ตั้งค่า VPN และระบบรักษาความปลอดภัย',
-    description: 'ติดตั้งและตั้งค่า VPN, Antivirus และระบบ 2FA สำหรับการเข้าถึงข้อมูลบริษัท',
-    categoryName: 'เทคนิคการทำงาน',
-    maxScore: 100,
-    assignedCount: 12,
-  },
-  {
-    id: 'mock-11',
-    title: 'นำเสนองานต่อทีม',
-    description: 'เตรียมและนำเสนอแผนงาน 30 วันแรกให้ทีมและหัวหน้างานรับทราบ',
-    categoryName: 'ทีมและการสื่อสาร',
-    maxScore: 100,
-    assignedCount: 10,
-  },
-  {
-    id: 'mock-12',
-    title: 'เรียนรู้กฎหมายแรงงาน',
-    description: 'ศึกษาสิทธิและหน้าที่ตามกฎหมายแรงงาน รวมถึงสวัสดิการที่พนักงานได้รับ',
-    categoryName: 'ความปลอดภัยและนโยบาย',
-    maxScore: 100,
-    assignedCount: 8,
-  },
-  {
-    id: 'mock-13',
-    title: 'เข้าร่วม Team Building',
-    description: 'เข้าร่วมกิจกรรม Team Building เพื่อสร้างความสัมพันธ์กับเพื่อนร่วมงาน',
-    categoryName: 'ทีมและการสื่อสาร',
-    maxScore: 100,
-    assignedCount: 21,
-  },
-  {
-    id: 'mock-14',
-    title: 'ทำแบบประเมินตนเอง',
-    description: 'ทำแบบประเมินทักษะและความสามารถของตนเองเพื่อวางแผนพัฒนาการทำงาน',
-    categoryName: 'วัฒนธรรมองค์กร',
-    maxScore: 100,
-    assignedCount: 5,
-  },
-  {
-    id: 'mock-15',
-    title: 'ศึกษาระบบ HR Self-Service',
-    description: 'เรียนรู้การใช้งานระบบ HR เพื่อลาหยุด เบิกค่าใช้จ่าย และดูสลิปเงินเดือน',
-    categoryName: 'เทคนิคการทำงาน',
-    maxScore: 100,
-    assignedCount: 19,
-  },
-  {
-    id: 'mock-16',
-    title: 'อบรมจริยธรรมทางธุรกิจ',
-    description: 'เข้าอบรมเรื่องจริยธรรมทางธุรกิจ การป้องกันการทุจริต และนโยบาย Anti-Corruption',
-    categoryName: 'ความปลอดภัยและนโยบาย',
-    maxScore: 100,
-    assignedCount: 21,
-  },
-  {
-    id: 'mock-17',
-    title: 'เข้าพบ Mentor ประจำตัว',
-    description: 'พบปะ Mentor ที่ได้รับมอบหมาย วางแผนการพัฒนาและเป้าหมายสำหรับ 90 วันแรก',
-    categoryName: 'ทีมและการสื่อสาร',
-    maxScore: 100,
-    assignedCount: 14,
-  },
-  {
-    id: 'mock-18',
-    title: 'ทำแบบทดสอบ IT Security',
-    description: 'ทำแบบทดสอบความรู้ด้าน IT Security เช่น Phishing, Password Policy, Data Protection',
-    categoryName: 'ความปลอดภัยและนโยบาย',
-    maxScore: 100,
-    assignedCount: 21,
-  },
-]
 
 /* ─── Badge component (Figma 45:14119) ─── */
 function Badge({ bg, border, text, children }: { bg: string; border: string; text: string; children: React.ReactNode }) {
@@ -223,10 +72,11 @@ function MissionCard({
         borderRadius: '10px',
         pt: '17px',
         px: '17px',
-        pb: '17px',
+        pb: '1px',
         display: 'flex',
         flexDirection: 'column',
         gap: space[8],
+        height: 128,
       }}
     >
       {/* Row 1: Title + Button */}
@@ -235,8 +85,7 @@ function MissionCard({
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
-          gap: space[8],
-          flexWrap: 'wrap',
+          height: 28,
         }}
       >
         <Typography
@@ -288,7 +137,7 @@ function MissionCard({
           fontWeight: 400,
           fontSize: 14,
           lineHeight: '20px',
-          color: '#4A5565',
+          color: colors.gray[500],
           letterSpacing: '-0.15px',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -299,7 +148,7 @@ function MissionCard({
       </Typography>
 
       {/* Row 3: Badges */}
-      <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center', flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center', height: 26 }}>
         {catColor && categoryName && (
           <Badge bg={catColor.bg} border={catColor.border} text={catColor.text}>
             {categoryName}
@@ -308,7 +157,7 @@ function MissionCard({
         <Badge bg="#F3F4F6" border="#E5E7EB" text="#364153">
           คะแนนเต็ม: {maxScore}
         </Badge>
-        <Badge bg="#F3F4F6" border="#E5E7EB" text="#6B7280">
+        <Badge bg="#DCFCE7" border="#B9F8CF" text="#008236">
           👥 {assignedCount} คน
         </Badge>
       </Box>
@@ -316,72 +165,16 @@ function MissionCard({
   )
 }
 
-/* ─── Pagination Button (Figma style) ─── */
-function PaginationButton({
-  children,
-  active = false,
-  disabled = false,
-  onClick,
-}: {
-  children: React.ReactNode
-  active?: boolean
-  disabled?: boolean
-  onClick?: () => void
-}) {
-  return (
-    <Box
-      onClick={disabled ? undefined : onClick}
-      sx={{
-        width: 36,
-        height: 36,
-        borderRadius: space[8],
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: disabled ? 'default' : 'pointer',
-        bgcolor: active ? '#F62B25' : 'transparent',
-        border: active ? 'none' : '1px solid #E5E7EB',
-        opacity: disabled ? 0.4 : 1,
-        '&:hover': disabled
-          ? {}
-          : { bgcolor: active ? '#E02520' : '#F9FAFB' },
-        transition: 'background-color 0.15s',
-      }}
-    >
-      <Typography
-        sx={{
-          fontFamily: "'Inter', sans-serif",
-          fontWeight: 500,
-          fontSize: 14,
-          lineHeight: '20px',
-          color: active ? '#FFFFFF' : '#364153',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        {children}
-      </Typography>
-    </Box>
-  )
-}
-
 export function MissionsTab() {
   const { missions, loading, error } = useMissions()
+  const { userMissions: umService } = useServices()
   const [searchText, setSearchText] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
   const [assignCounts, setAssignCounts] = useState<Record<string, number>>({})
-
-  /* Use real data if available, otherwise fall back to mock */
-  const useMock = missions.length === 0 && !loading
 
   /* Fetch assignment counts per mission */
   useEffect(() => {
-    if (useMock) return
     async function loadCounts() {
-      const { data } = await supabase
-        .from('user_missions')
-        .select('mission_id')
-      if (!data) return
+      const data = await umService.fetchUserMissions()
       const counts: Record<string, number> = {}
       data.forEach((um) => {
         counts[um.mission_id] = (counts[um.mission_id] ?? 0) + 1
@@ -389,55 +182,23 @@ export function MissionsTab() {
       setAssignCounts(counts)
     }
     loadCounts()
-  }, [useMock])
-
-  /* Build display list: mock or real */
-  type DisplayMission = {
-    id: string
-    title: string
-    description: string
-    categoryName: string | null
-    maxScore: number
-    assignedCount: number
-  }
-
-  const displayMissions: DisplayMission[] = useMemo(() => {
-    if (useMock) return MOCK_MISSIONS
-    return missions.map((m) => {
-      const cat = (m as Record<string, unknown>).categories as { name: string } | undefined
-      return {
-        id: m.id,
-        title: m.title,
-        description: m.description,
-        categoryName: cat?.name ?? null,
-        maxScore: 100,
-        assignedCount: assignCounts[m.id] ?? 0,
-      }
-    })
-  }, [useMock, missions, assignCounts])
+  }, [umService])
 
   /* Client-side search */
   const filteredMissions = useMemo(() => {
-    if (!searchText.trim()) return displayMissions
+    if (!searchText.trim()) return missions
     const lower = searchText.toLowerCase()
-    return displayMissions.filter((m) =>
+    return missions.filter((m) =>
       m.title.toLowerCase().includes(lower) ||
       m.description.toLowerCase().includes(lower)
     )
-  }, [displayMissions, searchText])
+  }, [missions, searchText])
 
-  /* Pagination */
-  const totalPages = Math.max(1, Math.ceil(filteredMissions.length / ITEMS_PER_PAGE))
-  const safeCurrentPage = Math.min(currentPage, totalPages)
-  const paginatedMissions = filteredMissions.slice(
-    (safeCurrentPage - 1) * ITEMS_PER_PAGE,
-    safeCurrentPage * ITEMS_PER_PAGE
-  )
-
-  /* Reset page when search changes */
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchText])
+  /* Category name lookup from enriched missions */
+  const getCategoryName = (mission: typeof missions[0]) => {
+    const cat = (mission as Record<string, unknown>).categories as { name: string } | undefined
+    return cat?.name || null
+  }
 
   if (loading) {
     return (
@@ -455,13 +216,13 @@ export function MissionsTab() {
         borderRadius: '10px',
         pt: '25px',
         px: '25px',
-        pb: '25px',
+        pb: '1px',
         display: 'flex',
         flexDirection: 'column',
         gap: space[16],
       }}
     >
-      {error && !useMock && <Alert severity="error">{error}</Alert>}
+      {error && <Alert severity="error">{error}</Alert>}
 
       {/* ─── Header: Title + Search (45:14097) ─── */}
       <Box
@@ -478,11 +239,11 @@ export function MissionsTab() {
             fontWeight: 600,
             fontSize: 18,
             lineHeight: '27px',
-            color: '#101828',
+            color: colors.gray[500],
             letterSpacing: '-0.44px',
           }}
         >
-          ภารกิจ
+          ภารกิจทั้งหมด
         </Typography>
 
         {/* Search input (45:14100) */}
@@ -542,7 +303,7 @@ export function MissionsTab() {
           gap: space[12],
         }}
       >
-        {filteredMissions.length === 0 ? (
+        {filteredMissions.length === 0 && !loading ? (
           <Box
             sx={{
               display: 'flex',
@@ -567,69 +328,18 @@ export function MissionsTab() {
             </Typography>
           </Box>
         ) : (
-          paginatedMissions.map((mission) => (
+          filteredMissions.map((mission) => (
             <MissionCard
               key={mission.id}
               title={mission.title}
               description={mission.description}
-              categoryName={mission.categoryName}
-              maxScore={mission.maxScore}
-              assignedCount={mission.assignedCount}
+              categoryName={getCategoryName(mission)}
+              maxScore={100}
+              assignedCount={assignCounts[mission.id] ?? 0}
             />
           ))
         )}
       </Box>
-
-      {/* ─── Pagination ─── */}
-      {filteredMissions.length > ITEMS_PER_PAGE && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            pt: space[8],
-          }}
-        >
-          <Typography
-            sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-              fontWeight: 400,
-              fontSize: 14,
-              lineHeight: '20px',
-              color: '#6A7282',
-              letterSpacing: '-0.15px',
-            }}
-          >
-            แสดง {(safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredMissions.length)} จาก {filteredMissions.length} รายการ
-          </Typography>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: space[4] }}>
-            <PaginationButton
-              disabled={safeCurrentPage <= 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            >
-              <ChevronLeftIcon sx={{ fontSize: 18 }} />
-            </PaginationButton>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <PaginationButton
-                key={page}
-                active={page === safeCurrentPage}
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </PaginationButton>
-            ))}
-
-            <PaginationButton
-              disabled={safeCurrentPage >= totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            >
-              <ChevronRightIcon sx={{ fontSize: 18 }} />
-            </PaginationButton>
-          </Box>
-        </Box>
-      )}
     </Box>
   )
 }

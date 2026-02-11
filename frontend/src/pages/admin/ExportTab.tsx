@@ -3,10 +3,11 @@ import { Box, Button, Alert, Typography, Stack, CircularProgress } from '@mui/ma
 import { FileDownload } from '@mui/icons-material'
 import { CascadingFilter } from '@/components/common/CascadingFilter'
 import { useCascadingFilter } from '@/hooks/useCascadingFilter'
-import { supabase } from '@/lib/supabase'
+import { useServices } from '@/services'
 import { exportToCSV, exportToJSON } from '@/utils/exportHelpers'
 
 export function ExportTab() {
+  const { admin: adminService, profiles: profilesService } = useServices()
   const filter = useCascadingFilter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -14,52 +15,15 @@ export function ExportTab() {
 
   const fetchExportData = async () => {
     // If company filter is set, first get matching profile IDs
-    let profileFilter: string[] | null = null
+    let profileFilter: string[] | undefined
     if (filter.selectedCompany) {
-      let profileQuery = supabase.from('profiles').select('id').eq('company_id', filter.selectedCompany)
-      if (filter.selectedDepartment) {
-        profileQuery = profileQuery.eq('department_id', filter.selectedDepartment)
-      }
-      const { data: filteredProfiles } = await profileQuery
-      profileFilter = (filteredProfiles ?? []).map((p) => p.id)
+      const profiles = await profilesService.fetchProfiles({
+        companyId: filter.selectedCompany,
+        departmentId: filter.selectedDepartment ?? undefined,
+      })
+      profileFilter = profiles.map((p) => p.id)
     }
-
-    let query = supabase.from('user_missions').select('*')
-    if (profileFilter && profileFilter.length > 0) {
-      query = query.in('user_id', profileFilter)
-    }
-
-    const { data, error: fetchError } = await query
-    if (fetchError) throw fetchError
-
-    const rows = data ?? []
-
-    // Fetch related missions and profiles
-    const missionIds = [...new Set(rows.map((r) => r.mission_id))]
-    const userIds = [...new Set(rows.map((r) => r.user_id))]
-
-    const [missionsRes, profilesRes] = await Promise.all([
-      missionIds.length > 0 ? supabase.from('missions').select('id, title').in('id', missionIds) : { data: [] },
-      userIds.length > 0 ? supabase.from('profiles').select('id, full_name, email, role').in('id', userIds) : { data: [] },
-    ])
-    const missionMap = new Map((missionsRes.data ?? []).map((m) => [m.id, m]))
-    const profileMap = new Map((profilesRes.data ?? []).map((p) => [p.id, p]))
-
-    return rows.map((row) => {
-      const mission = missionMap.get(row.mission_id)
-      const profile = profileMap.get(row.user_id)
-      return {
-        mission_title: mission?.title ?? '',
-        user_name: profile?.full_name ?? '',
-        user_email: profile?.email ?? '',
-        user_role: profile?.role ?? '',
-        status: row.status,
-        feedback_score: row.feedback_score,
-        started_at: row.started_at,
-        submitted_at: row.submitted_at,
-        reviewed_at: row.reviewed_at,
-      }
-    })
+    return adminService.fetchExportData(profileFilter)
   }
 
   const handleExport = async (format: 'csv' | 'json') => {

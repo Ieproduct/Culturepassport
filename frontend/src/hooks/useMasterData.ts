@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useServices } from '@/services'
 import type { Company, Department, Position, Category } from '@/types'
 
 export function useMasterData() {
+  const { masterData } = useServices()
   const [companies, setCompanies] = useState<Company[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [positions, setPositions] = useState<Position[]>([])
@@ -11,132 +12,132 @@ export function useMasterData() {
   const [error, setError] = useState<string | null>(null)
 
   const fetchCompanies = useCallback(async () => {
-    const { data, error: e } = await supabase.from('companies').select('*').order('name')
-    if (e) { setError(e.message); return }
-    setCompanies(data ?? [])
-  }, [])
+    try {
+      const data = await masterData.fetchCompanies()
+      setCompanies(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to fetch companies')
+    }
+  }, [masterData])
 
   const fetchDepartments = useCallback(async (companyId?: string) => {
-    let query = supabase.from('departments').select('*').order('name')
-    if (companyId) query = query.eq('company_id', companyId)
-    const { data, error: e } = await query
-    if (e) { setError(e.message); return }
-    setDepartments(data ?? [])
-  }, [])
+    try {
+      const data = await masterData.fetchDepartments(companyId)
+      setDepartments(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to fetch departments')
+    }
+  }, [masterData])
 
   const fetchPositions = useCallback(async (departmentId?: string) => {
-    let query = supabase.from('positions').select('*').order('name')
-    if (departmentId) query = query.eq('department_id', departmentId)
-    const { data, error: e } = await query
-    if (e) { setError(e.message); return }
-    setPositions(data ?? [])
-  }, [])
+    try {
+      const data = await masterData.fetchPositions(departmentId)
+      setPositions(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to fetch positions')
+    }
+  }, [masterData])
 
   const fetchCategories = useCallback(async () => {
-    const { data, error: e } = await supabase.from('categories').select('*').order('name')
-    if (e) { setError(e.message); return }
-    setCategories(data ?? [])
-  }, [])
+    try {
+      const data = await masterData.fetchCategories()
+      setCategories(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to fetch categories')
+    }
+  }, [masterData])
 
   const createCompany = useCallback(async (name: string, code: string) => {
     setError(null)
-    const { error: e } = await supabase.from('companies').insert({ name, code })
-    if (e) { setError(e.message); throw e }
+    await masterData.createCompany(name, code)
     await fetchCompanies()
-  }, [fetchCompanies])
+  }, [masterData, fetchCompanies])
 
   const updateCompany = useCallback(async (id: string, updates: Partial<Company>) => {
     setError(null)
-    const { error: e } = await supabase.from('companies').update(updates).eq('id', id)
-    if (e) { setError(e.message); throw e }
+    await masterData.updateCompany(id, updates)
     await fetchCompanies()
-  }, [fetchCompanies])
+  }, [masterData, fetchCompanies])
 
   const deleteCompany = useCallback(async (id: string) => {
     setError(null)
-    const { error: e } = await supabase.from('companies').delete().eq('id', id)
-    if (e) {
-      if (e.code === '23503') setError('ไม่สามารถลบได้ เนื่องจากมีข้อมูลที่ผูกอยู่')
-      else setError(e.message)
+    try {
+      await masterData.deleteCompany(id)
+      await fetchCompanies()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete company')
       throw e
     }
-    await fetchCompanies()
-  }, [fetchCompanies])
+  }, [masterData, fetchCompanies])
 
   const createDepartment = useCallback(async (name: string, companyId: string) => {
     setError(null)
-    const { error: e } = await supabase.from('departments').insert({ name, company_id: companyId })
-    if (e) { setError(e.message); throw e }
+    await masterData.createDepartment(name, companyId)
     await fetchDepartments()
-  }, [fetchDepartments])
+  }, [masterData, fetchDepartments])
 
   const updateDepartment = useCallback(async (id: string, updates: Partial<Department>) => {
     setError(null)
-    const { error: e } = await supabase.from('departments').update(updates).eq('id', id)
-    if (e) { setError(e.message); throw e }
+    await masterData.updateDepartment(id, updates)
     await fetchDepartments()
-  }, [fetchDepartments])
+  }, [masterData, fetchDepartments])
 
   const deleteDepartment = useCallback(async (id: string) => {
     setError(null)
-    const { error: e } = await supabase.from('departments').delete().eq('id', id)
-    if (e) {
-      if (e.code === '23503') setError('ไม่สามารถลบได้ เนื่องจากมีข้อมูลที่ผูกอยู่')
-      else setError(e.message)
+    try {
+      await masterData.deleteDepartment(id)
+      await fetchDepartments()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete department')
       throw e
     }
-    await fetchDepartments()
-  }, [fetchDepartments])
+  }, [masterData, fetchDepartments])
 
   const createPosition = useCallback(async (name: string, departmentId: string, level?: number) => {
     setError(null)
-    const { error: e } = await supabase.from('positions').insert({ name, department_id: departmentId, level: level ?? null })
-    if (e) { setError(e.message); throw e }
+    await masterData.createPosition(name, departmentId, level)
     await fetchPositions()
-  }, [fetchPositions])
+  }, [masterData, fetchPositions])
 
   const updatePosition = useCallback(async (id: string, updates: Partial<Position>) => {
     setError(null)
-    const { error: e } = await supabase.from('positions').update(updates).eq('id', id)
-    if (e) { setError(e.message); throw e }
+    await masterData.updatePosition(id, updates)
     await fetchPositions()
-  }, [fetchPositions])
+  }, [masterData, fetchPositions])
 
   const deletePosition = useCallback(async (id: string) => {
     setError(null)
-    const { error: e } = await supabase.from('positions').delete().eq('id', id)
-    if (e) {
-      if (e.code === '23503') setError('ไม่สามารถลบได้ เนื่องจากมีข้อมูลที่ผูกอยู่')
-      else setError(e.message)
+    try {
+      await masterData.deletePosition(id)
+      await fetchPositions()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete position')
       throw e
     }
-    await fetchPositions()
-  }, [fetchPositions])
+  }, [masterData, fetchPositions])
 
   const createCategory = useCallback(async (name: string, description?: string, colorCode?: string) => {
     setError(null)
-    const { error: e } = await supabase.from('categories').insert({ name, description: description ?? null, color_code: colorCode ?? null })
-    if (e) { setError(e.message); throw e }
+    await masterData.createCategory(name, description, colorCode)
     await fetchCategories()
-  }, [fetchCategories])
+  }, [masterData, fetchCategories])
 
   const updateCategory = useCallback(async (id: string, updates: Partial<Category>) => {
     setError(null)
-    const { error: e } = await supabase.from('categories').update(updates).eq('id', id)
-    if (e) { setError(e.message); throw e }
+    await masterData.updateCategory(id, updates)
     await fetchCategories()
-  }, [fetchCategories])
+  }, [masterData, fetchCategories])
 
   const deleteCategory = useCallback(async (id: string) => {
     setError(null)
-    const { error: e } = await supabase.from('categories').delete().eq('id', id)
-    if (e) {
-      if (e.code === '23503') setError('ไม่สามารถลบได้ เนื่องจากมีข้อมูลที่ผูกอยู่')
-      else setError(e.message)
+    try {
+      await masterData.deleteCategory(id)
+      await fetchCategories()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete category')
       throw e
     }
-    await fetchCategories()
-  }, [fetchCategories])
+  }, [masterData, fetchCategories])
 
   useEffect(() => {
     setLoading(true)

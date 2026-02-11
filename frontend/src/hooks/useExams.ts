@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
-import type { ExamTemplate, ExamScore } from '@/types'
-
-type ExamScoreWithTemplate = ExamScore & { exam_template_title?: string }
+import { useServices } from '@/services'
+import type { ExamTemplate } from '@/types'
+import type { ExamScoreWithTemplate } from '@/services/types'
 
 export function useExams() {
+  const { exams: examsService } = useServices()
   const [examTemplates, setExamTemplates] = useState<ExamTemplate[]>([])
   const [examScores, setExamScores] = useState<ExamScoreWithTemplate[]>([])
   const [loading, setLoading] = useState(false)
@@ -14,77 +14,60 @@ export function useExams() {
     setLoading(true)
     setError(null)
     try {
-      const { data, error: fetchError } = await supabase.from('exam_templates').select('*').order('created_at', { ascending: false })
-      if (fetchError) throw fetchError
-      setExamTemplates(data ?? [])
+      const data = await examsService.fetchExamTemplates()
+      setExamTemplates(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch exam templates')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [examsService])
 
   const createExamTemplate = useCallback(async (data: { title: string; description?: string | null; passing_score: number; questions: ExamTemplate['questions'] }) => {
     setError(null)
     try {
-      const { error: insertError } = await supabase.from('exam_templates').insert(data)
-      if (insertError) throw insertError
+      await examsService.createExamTemplate(data)
       await fetchExamTemplates()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create exam template')
       throw err
     }
-  }, [fetchExamTemplates])
+  }, [examsService, fetchExamTemplates])
 
   const updateExamTemplate = useCallback(async (id: string, updates: Partial<ExamTemplate>) => {
     setError(null)
     try {
-      const { error: updateError } = await supabase.from('exam_templates').update(updates).eq('id', id)
-      if (updateError) throw updateError
+      await examsService.updateExamTemplate(id, updates)
       await fetchExamTemplates()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update exam template')
       throw err
     }
-  }, [fetchExamTemplates])
+  }, [examsService, fetchExamTemplates])
 
   const deleteExamTemplate = useCallback(async (id: string) => {
     setError(null)
     try {
-      const { error: deleteError } = await supabase.from('exam_templates').delete().eq('id', id)
-      if (deleteError) throw deleteError
+      await examsService.deleteExamTemplate(id)
       await fetchExamTemplates()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete exam template')
       throw err
     }
-  }, [fetchExamTemplates])
+  }, [examsService, fetchExamTemplates])
 
   const fetchExamScores = useCallback(async (userId?: string) => {
     setLoading(true)
     setError(null)
     try {
-      let query = supabase.from('exam_scores').select('*')
-      if (userId) query = query.eq('user_id', userId)
-      const { data, error: fetchError } = await query.order('taken_at', { ascending: false })
-      if (fetchError) throw fetchError
-
-      // Fetch template titles separately
-      const scores = data ?? []
-      const templateIds = [...new Set(scores.map((s) => s.exam_template_id))]
-      const { data: templates } = await supabase.from('exam_templates').select('id, title').in('id', templateIds)
-      const templateMap = new Map((templates ?? []).map((t) => [t.id, t.title]))
-
-      setExamScores(scores.map((s) => ({
-        ...s,
-        exam_template_title: templateMap.get(s.exam_template_id),
-      })))
+      const data = await examsService.fetchExamScores(userId)
+      setExamScores(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch exam scores')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [examsService])
 
   useEffect(() => { fetchExamTemplates() }, [fetchExamTemplates])
 

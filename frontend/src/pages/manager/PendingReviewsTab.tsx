@@ -19,23 +19,12 @@ import {
 } from '@mui/material'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { EmptyState } from '@/components/common/EmptyState'
-import { supabase } from '@/lib/supabase'
+import { useServices } from '@/services'
 import { formatDateTime } from '@/utils/formatDate'
-import { getSignedUrl } from '@/utils/storageHelpers'
-
-type PendingMission = {
-  id: string
-  mission_id: string
-  user_id: string
-  status: string
-  submitted_content: string | null
-  submitted_file_url: string | null
-  submitted_at: string | null
-  mission_title: string
-  employee_name: string
-}
+import type { PendingMission } from '@/services/types'
 
 export function PendingReviewsTab() {
+  const { admin: adminService, storage: storageService } = useServices()
   const [pendingMissions, setPendingMissions] = useState<PendingMission[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedMission, setSelectedMission] = useState<PendingMission | null>(null)
@@ -52,37 +41,8 @@ export function PendingReviewsTab() {
     setLoading(true)
     setError(null)
     try {
-    const { data, error: fetchError } = await supabase
-      .from('user_missions')
-      .select('*')
-      .eq('status', 'submitted')
-
-    if (fetchError) throw fetchError
-
-    const rows = data ?? []
-    const missionIds = [...new Set(rows.map((r) => r.mission_id))]
-    const userIds = [...new Set(rows.map((r) => r.user_id))]
-
-    const [missionsRes, profilesRes] = await Promise.all([
-      missionIds.length > 0 ? supabase.from('missions').select('id, title').in('id', missionIds) : { data: [] },
-      userIds.length > 0 ? supabase.from('profiles').select('id, full_name').in('id', userIds) : { data: [] },
-    ])
-    const missionMap = new Map((missionsRes.data ?? []).map((m) => [m.id, m.title]))
-    const profileMap = new Map((profilesRes.data ?? []).map((p) => [p.id, p.full_name]))
-
-    const mapped: PendingMission[] = rows.map((item) => ({
-      id: item.id,
-      mission_id: item.mission_id,
-      user_id: item.user_id,
-      status: item.status,
-      submitted_content: item.submitted_content,
-      submitted_file_url: item.submitted_file_url,
-      submitted_at: item.submitted_at,
-      mission_title: missionMap.get(item.mission_id) ?? 'Mission',
-      employee_name: profileMap.get(item.user_id) ?? 'Employee',
-    }))
-
-    setPendingMissions(mapped)
+      const data = await adminService.fetchPendingMissions()
+      setPendingMissions(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'โหลดข้อมูลไม่สำเร็จ')
     } finally {
@@ -101,16 +61,7 @@ export function PendingReviewsTab() {
     if (feedbackScore < 1) return
 
     setSubmitting(true)
-    await supabase
-      .from('user_missions')
-      .update({
-        status: approved ? 'approved' : 'rejected',
-        feedback_score: feedbackScore,
-        feedback_text: feedbackText || null,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', selectedMission.id)
-
+    await adminService.reviewMission(selectedMission.id, approved, feedbackScore, feedbackText)
     setSubmitting(false)
     setSelectedMission(null)
     await fetchPendingMissions()
@@ -179,7 +130,7 @@ export function PendingReviewsTab() {
                   if (path.startsWith('http')) {
                     window.open(path, '_blank')
                   } else {
-                    const url = await getSignedUrl('mission-deliverables', path)
+                    const url = await storageService.getSignedUrl('mission-deliverables', path)
                     if (url) window.open(url, '_blank')
                   }
                 }}
