@@ -23,194 +23,26 @@ import {
 } from '@mui/icons-material'
 import { IconEdit } from '@/components/icons/IconEdit'
 import { IconDelete } from '@/components/icons/IconDelete'
-import { IconChevronLeft } from '@/components/icons/IconChevronLeft'
 import { space } from '@/theme/spacing'
 import { useExams } from '@/hooks/useExams'
 import { CreateExamForm, type ExamInitialData } from './CreateExamForm'
+import {
+  FONT_FAMILY,
+  FONT_FAMILY_INTER,
+  EXAM_CATEGORIES,
+  CATEGORY_COLORS,
+  DEFAULT_CATEGORY_COLOR,
+  cardSx,
+  pageTitleSx,
+  pageSubtitleSx,
+} from './exam-shared'
+import { ExamDetailView } from './ExamDetailView'
+import { MOCK_EXAMS } from './exam-mock-data'
 
 const ITEMS_PER_PAGE = 10
 
-/* ─── Category list (Figma 46:14654–46:14676) ─── */
-const CATEGORIES = [
-  'ทุกหมวดหมู่',
-  'วัฒนธรรมองค์กร',
-  'เทคนิคการทำงาน',
-  'ทีมและการสื่อสาร',
-  'ความปลอดภัยและนโยบาย',
-  'การพัฒนาทักษะ',
-  'ผลิตภัณฑ์และบริการ',
-  'กระบวนการทำงาน',
-  'ความรู้ทางธุรกิจ',
-  'เทคโนโลยีและเครื่องมือ',
-  'มาตรฐานคุณภาพ',
-  'อื่นๆ',
-]
-
-/* ─── Category color map (Figma exam card badges) ─── */
-const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  'ความปลอดภัยและนโยบาย': { bg: '#FFE2E2', text: '#9F0712' },
-  'วัฒนธรรมองค์กร': { bg: '#DBEAFE', text: '#193CB8' },
-  'เทคนิคการทำงาน': { bg: '#DCFCE7', text: '#016630' },
-  'ทีมและการสื่อสาร': { bg: '#F3E8FF', text: '#8200DB' },
-  'การพัฒนาทักษะ': { bg: '#FFF7ED', text: '#9A3412' },
-  'ผลิตภัณฑ์และบริการ': { bg: '#F0F9FF', text: '#0369A1' },
-  'กระบวนการทำงาน': { bg: '#F5F5F5', text: '#525252' },
-  'ความรู้ทางธุรกิจ': { bg: '#FFFBEB', text: '#92400E' },
-  'เทคโนโลยีและเครื่องมือ': { bg: '#F0FDFA', text: '#115E59' },
-  'มาตรฐานคุณภาพ': { bg: '#FDF2F8', text: '#9D174D' },
-  'อื่นๆ': { bg: '#F3F4F6', text: '#364153' },
-}
-const DEFAULT_CATEGORY_COLOR = { bg: '#F3F4F6', text: '#364153' }
-
-/* ─── Mock question type ─── */
-type MockQuestion = {
-  type: 'multiple_choice' | 'essay'
-  text: string
-  options: [string, string, string, string]
-  correctAnswer: number | null
-}
-
-/* ─── Mock questions for exam-1 (Figma 52:81339) ─── */
-const MOCK_QUESTIONS: Record<string, MockQuestion[]> = {
-  'exam-1': [
-    {
-      type: 'multiple_choice',
-      text: 'อะไรคือสิ่งสำคัญที่สุดในการรักษาความปลอดภัยของข้อมูล?',
-      options: [
-        'ใช้รหัสผ่านที่แข็งแกร่งและไม่แชร์ให้ผู้อื่น',
-        'ใช้รหัสผ่านเดียวกันทุกระบบเพื่อความสะดวก',
-        'เขียนรหัสผ่านไว้บน Post-it',
-        'แชร์รหัสผ่านกับเพื่อนร่วมงานที่ใกล้ชิด',
-      ],
-      correctAnswer: 0,
-    },
-    {
-      type: 'multiple_choice',
-      text: 'ถ้าคุณได้รับอีเมลที่ดูน่าสงสัยจากคนที่ไม่รู้จัก คุณควรทำอย่างไร?',
-      options: [
-        'เปิดดูและคลิกลิงก์เพื่อดูว่าเป็นอะไร',
-        'ลบทิ้งและรายงานให้ IT ทราบ',
-        'ส่งต่อให้เพื่อนร่วมงาน',
-        'ตอบกลับเพื่อถามว่าเป็นใคร',
-      ],
-      correctAnswer: 1,
-    },
-    {
-      type: 'essay',
-      text: 'การทำงานในพื้นที่สาธารณะ (เช่น ร้านกาแฟ) ควรระวังอะไรมากที่สุด?',
-      options: ['', '', '', ''],
-      correctAnswer: null,
-    },
-    {
-      type: 'essay',
-      text: 'ระยะเวลาในการเปลี่ยนรหัสผ่านที่แนะนำคือทุกๆ กี่เดือน?',
-      options: ['', '', '', ''],
-      correctAnswer: null,
-    },
-    {
-      type: 'essay',
-      text: 'USB ที่เจอตามพื้นในออฟฟิศ ควรทำอย่างไร?',
-      options: ['', '', '', ''],
-      correctAnswer: null,
-    },
-    {
-      type: 'essay',
-      text: 'Two-Factor Authentication (2FA) คืออะไร?',
-      options: ['', '', '', ''],
-      correctAnswer: null,
-    },
-    {
-      type: 'essay',
-      text: 'Phishing คืออะไร?',
-      options: ['', '', '', ''],
-      correctAnswer: null,
-    },
-    {
-      type: 'essay',
-      text: 'การสำรองข้อมูล (Backup) ควรทำบ่อยแค่ไหน?',
-      options: ['', '', '', ''],
-      correctAnswer: null,
-    },
-    {
-      type: 'essay',
-      text: 'Wi-Fi สาธารณะที่ไม่มีรหัสผ่าน มีความเสี่ยงอย่างไร?',
-      options: ['', '', '', ''],
-      correctAnswer: null,
-    },
-    {
-      type: 'essay',
-      text: 'ถ้าคุณสงสัยว่าบัญชีของคุณถูกแฮก ควรทำอย่างไรเป็นอันดับแรก?',
-      options: ['', '', '', ''],
-      correctAnswer: null,
-    },
-  ],
-}
-
-const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const
-
-/* ─── Mock data matching Figma 46:14678 exactly ─── */
-const MOCK_EXAMS = [
-  {
-    id: 'exam-1',
-    title: 'แบบทดสอบความปลอดภัยทางไซเบอร์',
-    description: 'ทดสอบความรู้เกี่ยวกับการรักษาความปลอดภัยข้อมูลและระบบสารสนเทศ',
-    category: 'ความปลอดภัยและนโยบาย',
-    questionCount: 10,
-    duration: 15,
-    passingScore: 70,
-    isActive: true,
-  },
-  {
-    id: 'exam-2',
-    title: 'แบบทดสอบวัฒนธรรมองค์กร',
-    description: 'ทดสอบความเข้าใจเกี่ยวกับวัฒนธรรม ค่านิยม และสิทธิประโยชน์ของบริษัท',
-    category: 'วัฒนธรรมองค์กร',
-    questionCount: 10,
-    duration: 10,
-    passingScore: 70,
-    isActive: true,
-  },
-  {
-    id: 'exam-3',
-    title: 'แบบทดสอบ Git และ DevOps',
-    description: 'ทดสอบความรู้เกี่ยวกับการใช้งาน Git, Version Control และเครื่องมือ DevOps',
-    category: 'เทคนิคการทำงาน',
-    questionCount: 10,
-    duration: 12,
-    passingScore: 70,
-    isActive: true,
-  },
-  {
-    id: 'exam-4',
-    title: 'แบบประเมินทัศนคติและค่านิยม (มีข้อเขียน)',
-    description: 'ประเมินทัศนคติ ค่านิยม และความเข้าใจในวัฒนธรรมองค์กร ผ่านคำถามปรนัยและข้อเขียน',
-    category: 'วัฒนธรรมองค์กร',
-    questionCount: 12,
-    duration: 20,
-    passingScore: 70,
-    isActive: true,
-  },
-  {
-    id: 'exam-5',
-    title: 'ข้อสอบอบรมข้อเขียน',
-    description: 'แบบทดสอบข้อเขียนเพื่อประเมินความเข้าใจและการประยุกต์ใช้ความรู้ในการทำงาน',
-    category: 'วัฒนธรรมองค์กร',
-    questionCount: 5,
-    duration: 30,
-    passingScore: 60,
-    isActive: true,
-  },
-  {
-    id: 'exam-6',
-    title: 'แบบทดสอบปลายภาค (ข้อกาและข้อเขียนผสม)',
-    description: 'แบบทดสอบครอบคลุมความรู้ทั้งหมด ประกอบด้วยข้อกาและข้อเขียน',
-    category: 'วัฒนธรรมองค์กร',
-    questionCount: 12,
-    duration: 45,
-    passingScore: 70,
-    isActive: true,
-  },
-]
+/* ─── Filter categories (prepend "all" to shared list) ─── */
+const FILTER_CATEGORIES = ['ทุกหมวดหมู่', ...EXAM_CATEGORIES]
 
 /* ─── Stats Card (Figma 46:14589) ─── */
 function StatsCard({
@@ -265,7 +97,7 @@ function StatsCard({
         <Box>
           <Typography
             sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 400,
               fontSize: 14,
               lineHeight: '20px',
@@ -277,7 +109,7 @@ function StatsCard({
           </Typography>
           <Typography
             sx={{
-              fontFamily: "'Inter', sans-serif",
+              fontFamily: FONT_FAMILY_INTER,
               fontWeight: 700,
               fontSize: 24,
               lineHeight: '32px',
@@ -351,12 +183,7 @@ function ExamCard({
   return (
     <Box
       sx={{
-        bgcolor: '#FFFFFF',
-        border: '2px solid #E5E7EB',
-        borderRadius: '10px',
-        p: { xs: '16px', sm: '26px' },
-        display: 'flex',
-        flexDirection: 'column',
+        ...cardSx,
         gap: space[8],
       }}
     >
@@ -375,7 +202,7 @@ function ExamCard({
           <Box sx={{ display: 'flex', gap: space[12], alignItems: 'center', flexWrap: 'wrap' }}>
             <Typography
               sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontWeight: 600,
                 fontSize: 18,
                 lineHeight: '28px',
@@ -398,7 +225,7 @@ function ExamCard({
             >
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 12,
                   lineHeight: '16px',
@@ -413,7 +240,7 @@ function ExamCard({
           {/* Description */}
           <Typography
             sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 400,
               fontSize: 16,
               lineHeight: '24px',
@@ -430,7 +257,7 @@ function ExamCard({
             <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center' }}>
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 14,
                   lineHeight: '20px',
@@ -452,7 +279,7 @@ function ExamCard({
               >
                 <Typography
                   sx={{
-                    fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                    fontFamily: FONT_FAMILY,
                     fontWeight: 400,
                     fontSize: 14,
                     lineHeight: '20px',
@@ -469,7 +296,7 @@ function ExamCard({
             <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: { xs: 0, sm: space[12] } }}>
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 14,
                   lineHeight: '20px',
@@ -481,7 +308,7 @@ function ExamCard({
               </Typography>
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 400,
                   fontSize: 14,
                   lineHeight: '20px',
@@ -497,7 +324,7 @@ function ExamCard({
             <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: { xs: 0, sm: space[12] } }}>
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 14,
                   lineHeight: '20px',
@@ -509,7 +336,7 @@ function ExamCard({
               </Typography>
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 400,
                   fontSize: 14,
                   lineHeight: '20px',
@@ -525,7 +352,7 @@ function ExamCard({
             <Box sx={{ display: 'flex', gap: space[4], alignItems: 'center', ml: { xs: 0, sm: space[12] } }}>
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 14,
                   lineHeight: '20px',
@@ -537,7 +364,7 @@ function ExamCard({
               </Typography>
               <Typography
                 sx={{
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: FONT_FAMILY_INTER,
                   fontWeight: 400,
                   fontSize: 14,
                   lineHeight: '20px',
@@ -605,7 +432,7 @@ function PaginationButton({
     >
       <Typography
         sx={{
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: FONT_FAMILY_INTER,
           fontWeight: 500,
           fontSize: 14,
           lineHeight: '20px',
@@ -630,464 +457,6 @@ type DisplayExam = {
   duration: number
   passingScore: number
   isActive: boolean
-}
-
-/* ─── Exam Detail View (Figma 52:81339) ─── */
-function ExamDetailView({
-  exam,
-  onBack,
-}: {
-  exam: {
-    id: string
-    title: string
-    description: string
-    category: string
-    questionCount: number
-    duration: number
-    passingScore: number
-  }
-  onBack: () => void
-}) {
-  const catColor = CATEGORY_COLORS[exam.category] ?? DEFAULT_CATEGORY_COLOR
-  const questions = MOCK_QUESTIONS[exam.id] ?? []
-
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[16] }}>
-      {/* ═══ Header: Back icon + Title ═══ */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: space[12],
-          minHeight: 60,
-        }}
-      >
-        <Box
-          onClick={onBack}
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            flexShrink: 0,
-            '&:hover': { bgcolor: '#F3F4F6' },
-            transition: 'background-color 0.15s',
-          }}
-        >
-          <IconChevronLeft variant="solid" sx={{ fontSize: 24, color: '#364153' }} />
-        </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
-          <Typography
-            sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-              fontWeight: 700,
-              fontSize: 24,
-              lineHeight: '32px',
-              color: '#101828',
-              letterSpacing: '0.07px',
-            }}
-          >
-            {exam.title}
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-              fontWeight: 400,
-              fontSize: 16,
-              lineHeight: '24px',
-              color: '#4A5565',
-              letterSpacing: '-0.31px',
-            }}
-          >
-            ดูรายละเอียดแบบทดสอบ
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* ═══ ข้อมูลทั่วไป card ═══ */}
-      <Box
-        sx={{
-          bgcolor: '#FFFFFF',
-          border: '2px solid #E5E7EB',
-          borderRadius: '10px',
-          p: { xs: '16px', sm: '26px' },
-          display: 'flex',
-          flexDirection: 'column',
-          gap: space[16],
-        }}
-      >
-        <Typography
-          sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-            fontWeight: 600,
-            fontSize: 18,
-            lineHeight: '27px',
-            letterSpacing: '-0.44px',
-            color: '#101828',
-          }}
-        >
-          ข้อมูลทั่วไป
-        </Typography>
-
-        {/* 2x2 grid info rows */}
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-            gap: space[12],
-          }}
-        >
-          {/* หมวดหมู่ */}
-          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center' }}>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                fontWeight: 500,
-                fontSize: 14,
-                lineHeight: '20px',
-                color: '#6B7280',
-                flexShrink: 0,
-              }}
-            >
-              หมวดหมู่:
-            </Typography>
-            <Box
-              sx={{
-                bgcolor: catColor.bg,
-                borderRadius: '4px',
-                height: 28,
-                display: 'inline-flex',
-                alignItems: 'center',
-                px: space[8],
-              }}
-            >
-              <Typography
-                sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                  fontWeight: 400,
-                  fontSize: 14,
-                  lineHeight: '20px',
-                  color: catColor.text,
-                }}
-              >
-                {exam.category}
-              </Typography>
-            </Box>
-          </Box>
-          {/* จำนวนข้อ */}
-          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center' }}>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                fontWeight: 500,
-                fontSize: 14,
-                lineHeight: '20px',
-                color: '#6B7280',
-              }}
-            >
-              จำนวนข้อ:
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                fontWeight: 500,
-                fontSize: 14,
-                lineHeight: '20px',
-                color: '#101828',
-              }}
-            >
-              {exam.questionCount} ข้อ
-            </Typography>
-          </Box>
-          {/* ระยะเวลา */}
-          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center' }}>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                fontWeight: 500,
-                fontSize: 14,
-                lineHeight: '20px',
-                color: '#6B7280',
-              }}
-            >
-              ระยะเวลา:
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                fontWeight: 500,
-                fontSize: 14,
-                lineHeight: '20px',
-                color: '#101828',
-              }}
-            >
-              {exam.duration} นาที
-            </Typography>
-          </Box>
-          {/* คะแนนผ่าน */}
-          <Box sx={{ display: 'flex', gap: space[8], alignItems: 'center' }}>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                fontWeight: 500,
-                fontSize: 14,
-                lineHeight: '20px',
-                color: '#6B7280',
-              }}
-            >
-              คะแนนผ่าน:
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                fontWeight: 500,
-                fontSize: 14,
-                lineHeight: '20px',
-                color: '#101828',
-              }}
-            >
-              {exam.passingScore}%
-            </Typography>
-          </Box>
-        </Box>
-
-        {/* คำอธิบาย */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
-          <Typography
-            sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-              fontWeight: 500,
-              fontSize: 14,
-              lineHeight: '20px',
-              color: '#6B7280',
-            }}
-          >
-            คำอธิบาย:
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-              fontWeight: 400,
-              fontSize: 14,
-              lineHeight: '20px',
-              color: '#364153',
-            }}
-          >
-            {exam.description}
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* ═══ คำถามทั้งหมด ═══ */}
-      <Box
-        sx={{
-          bgcolor: '#FFFFFF',
-          border: '2px solid #E5E7EB',
-          borderRadius: '10px',
-          p: { xs: '16px', sm: '26px' },
-          display: 'flex',
-          flexDirection: 'column',
-          gap: space[16],
-        }}
-      >
-        <Typography
-          sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-            fontWeight: 600,
-            fontSize: 18,
-            lineHeight: '27px',
-            letterSpacing: '-0.44px',
-            color: '#101828',
-          }}
-        >
-          คำถามทั้งหมด
-        </Typography>
-
-        {/* Question list */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[16] }}>
-          {questions.map((q, idx) => {
-            const isMultiple = q.type === 'multiple_choice'
-            return (
-              <Box
-                key={idx}
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: space[12],
-                }}
-              >
-                {/* Question header: number + text + badge */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: space[8], flexWrap: 'wrap' }}>
-                  <Typography
-                    sx={{
-                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                      fontWeight: 500,
-                      fontSize: 16,
-                      lineHeight: '24px',
-                      letterSpacing: '-0.31px',
-                      color: '#101828',
-                    }}
-                  >
-                    {`${idx + 1}. ${q.text}`}
-                  </Typography>
-                  <Box
-                    sx={{
-                      bgcolor: isMultiple ? '#DBEAFE' : '#F3E8FF',
-                      borderRadius: '9999px',
-                      height: 20,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      px: space[8],
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                        fontWeight: 400,
-                        fontSize: 12,
-                        lineHeight: '16px',
-                        color: isMultiple ? '#1447E6' : '#8200DB',
-                      }}
-                    >
-                      {isMultiple ? 'ปรนัย' : 'ข้อเขียน'}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Answer content */}
-                {isMultiple ? (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[6] }}>
-                    {OPTION_LABELS.map((letter, optIdx) => {
-                      const isCorrect = q.correctAnswer === optIdx
-                      return (
-                        <Box
-                          key={letter}
-                          sx={{
-                            bgcolor: isCorrect ? '#F0FDF4' : 'transparent',
-                            border: isCorrect ? '1px solid #7BF1A8' : '1px solid transparent',
-                            borderRadius: '8px',
-                            px: space[12],
-                            py: space[6],
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: space[8],
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                              fontWeight: isCorrect ? 500 : 400,
-                              fontSize: 14,
-                              lineHeight: '20px',
-                              color: isCorrect ? '#00A63E' : '#4A5565',
-                            }}
-                          >
-                            {`${letter}. ${q.options[optIdx]}`}
-                          </Typography>
-                          {isCorrect && (
-                            <Box
-                              sx={{
-                                bgcolor: '#00A63E',
-                                borderRadius: '9999px',
-                                height: 20,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                px: space[8],
-                                flexShrink: 0,
-                              }}
-                            >
-                              <Typography
-                                sx={{
-                                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                                  fontWeight: 500,
-                                  fontSize: 12,
-                                  lineHeight: '16px',
-                                  color: '#FFFFFF',
-                                }}
-                              >
-                                คำตอบที่ถูกต้อง
-                              </Typography>
-                            </Box>
-                          )}
-                        </Box>
-                      )
-                    })}
-                  </Box>
-                ) : (
-                  /* Essay answer preview */
-                  <Box
-                    sx={{
-                      bgcolor: '#FAF5FF',
-                      border: '1px solid #E9D4FF',
-                      borderRadius: '8px',
-                      p: space[12],
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: space[4],
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                        fontWeight: 500,
-                        fontSize: 14,
-                        lineHeight: '20px',
-                        color: '#8200DB',
-                      }}
-                    >
-                      📝 คำตอบแบบข้อเขียน
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                        fontWeight: 400,
-                        fontSize: 12,
-                        lineHeight: '16px',
-                        color: '#A855F7',
-                      }}
-                    >
-                      จำกัดความยาว: คำ
-                    </Typography>
-                    <Box
-                      sx={{
-                        bgcolor: '#FFFFFF',
-                        border: '1px solid #E9D4FF',
-                        borderRadius: '6px',
-                        p: space[8],
-                        mt: space[4],
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                          fontWeight: 400,
-                          fontSize: 14,
-                          lineHeight: '20px',
-                          color: 'rgba(10,10,10,0.4)',
-                          fontStyle: 'italic',
-                        }}
-                      >
-                        พนักงานพิมพ์คำตอบที่นี่...
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-
-                {/* Divider between questions */}
-                {idx < questions.length - 1 && (
-                  <Box sx={{ height: '1px', bgcolor: '#E5E7EB', mt: space[4] }} />
-                )}
-              </Box>
-            )
-          })}
-        </Box>
-      </Box>
-    </Box>
-  )
 }
 
 export function ExamsTab() {
@@ -1228,28 +597,10 @@ export function ExamsTab() {
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
-          <Typography
-            sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-              fontWeight: 700,
-              fontSize: 24,
-              lineHeight: '32px',
-              color: '#101828',
-              letterSpacing: '0.07px',
-            }}
-          >
+          <Typography sx={pageTitleSx}>
             จัดการแบบทดสอบ
           </Typography>
-          <Typography
-            sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-              fontWeight: 400,
-              fontSize: 16,
-              lineHeight: '24px',
-              color: '#4A5565',
-              letterSpacing: '-0.31px',
-            }}
-          >
+          <Typography sx={pageSubtitleSx}>
             สร้างและจัดการเทมเพลตแบบทดสอบสำหรับ Onboarding
           </Typography>
         </Box>
@@ -1274,7 +625,7 @@ export function ExamsTab() {
           <AddIcon sx={{ fontSize: 20, color: '#FFFFFF' }} />
           <Typography
             sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 500,
               fontSize: 16,
               lineHeight: '24px',
@@ -1340,7 +691,7 @@ export function ExamsTab() {
       >
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: FONT_FAMILY,
             fontWeight: 600,
             fontSize: 18,
             lineHeight: '28px',
@@ -1383,7 +734,7 @@ export function ExamsTab() {
                 '& .MuiOutlinedInput-root': {
                   height: 44,
                   borderRadius: '10px',
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: 16,
                   letterSpacing: '-0.31px',
                   pl: '40px',
@@ -1419,7 +770,7 @@ export function ExamsTab() {
               sx={{
                 height: 41,
                 borderRadius: '10px',
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontSize: 16,
                 letterSpacing: '-0.31px',
                 minWidth: 200,
@@ -1436,12 +787,12 @@ export function ExamsTab() {
                 },
               }}
             >
-              {CATEGORIES.map((cat) => (
+              {FILTER_CATEGORIES.map((cat) => (
                 <MenuItem
                   key={cat}
                   value={cat}
                   sx={{
-                    fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                    fontFamily: FONT_FAMILY,
                     fontSize: 16,
                     letterSpacing: '-0.31px',
                     color: '#0A0A0A',
@@ -1488,7 +839,7 @@ export function ExamsTab() {
         >
           <Typography
             sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 400,
               fontSize: 14,
               lineHeight: '20px',

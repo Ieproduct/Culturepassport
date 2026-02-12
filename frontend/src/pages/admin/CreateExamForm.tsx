@@ -14,43 +14,34 @@ import { CalendarMonth as CalendarIcon } from '@mui/icons-material'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import type { Dayjs } from 'dayjs'
 import { space } from '@/theme/spacing'
-
-/* ─── Question types ─── */
-type QuestionType = 'multiple_choice' | 'essay'
-
-interface Question {
-  type: QuestionType
-  text: string
-  options: [string, string, string, string]
-  correctAnswer: number | null // 0-3 for multiple choice, null for essay
-}
-
-/* ─── Category list (same as ExamsTab) ─── */
-const CATEGORIES = [
-  'วัฒนธรรมองค์กร',
-  'เทคนิคการทำงาน',
-  'ทีมและการสื่อสาร',
-  'ความปลอดภัยและนโยบาย',
-  'การพัฒนาทักษะ',
-  'ผลิตภัณฑ์และบริการ',
-  'กระบวนการทำงาน',
-  'ความรู้ทางธุรกิจ',
-  'เทคโนโลยีและเครื่องมือ',
-  'มาตรฐานคุณภาพ',
-  'อื่นๆ',
-]
+import { IconEdit } from '@/components/icons/IconEdit'
+import { IconDelete } from '@/components/icons/IconDelete'
+import {
+  FONT_FAMILY,
+  FONT_FAMILY_INTER,
+  EXAM_CATEGORIES,
+  OPTION_LABELS,
+  cardSx,
+  sectionTitleSx,
+  pageTitleSx,
+  pageSubtitleSx,
+  metaLabelSx,
+  metaValueSx,
+  type Question,
+  type QuestionType,
+} from './exam-shared'
+import { QuestionTypeBadge } from './QuestionTypeBadge'
 
 /* ─── Step Indicator (Figma 50:15055 / 51:15273) ─── */
 type StepState = 'past' | 'active' | 'upcoming'
 
 function StepIndicator({ step, label, state }: { step: number; label: string; state: StepState }) {
-  const isActive = state === 'active'
   const circleStyles = {
-    active: { bgcolor: '#F62B25', border: 'none', color: '#FFFFFF' },
-    past: { bgcolor: 'transparent', border: '2px solid #D1D5DC', color: '#99A1AF' },
+    past: { bgcolor: '#F62B25', border: 'none', color: '#FFFFFF' },
+    active: { bgcolor: 'transparent', border: '2px solid #F62B25', color: '#F62B25' },
     upcoming: { bgcolor: 'transparent', border: '2px solid #D1D5DC', color: '#99A1AF' },
   }
-  const labelColor = isActive ? '#F62B25' : '#99A1AF'
+  const labelColor = state === 'upcoming' ? '#99A1AF' : '#F62B25'
   const cs = circleStyles[state]
 
   return (
@@ -70,7 +61,7 @@ function StepIndicator({ step, label, state }: { step: number; label: string; st
       >
         <Typography
           sx={{
-            fontFamily: "'Inter', sans-serif",
+            fontFamily: FONT_FAMILY_INTER,
             fontWeight: 600,
             fontSize: 16,
             lineHeight: '24px',
@@ -82,7 +73,7 @@ function StepIndicator({ step, label, state }: { step: number; label: string; st
       </Box>
       <Typography
         sx={{
-          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+          fontFamily: FONT_FAMILY,
           fontWeight: 500,
           fontSize: 16,
           lineHeight: '24px',
@@ -101,7 +92,7 @@ function FormLabel({ children, required = false }: { children: React.ReactNode; 
   return (
     <Typography
       sx={{
-        fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+        fontFamily: FONT_FAMILY,
         fontWeight: 500,
         fontSize: 14,
         lineHeight: '20px',
@@ -124,7 +115,7 @@ const inputSx = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
     borderRadius: '10px',
-    fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+    fontFamily: FONT_FAMILY,
     fontSize: 16,
     letterSpacing: '-0.31px',
     '& fieldset': {
@@ -178,6 +169,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
   const [questionText, setQuestionText] = useState('')
   const [options, setOptions] = useState<[string, string, string, string]>(['', '', '', ''])
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null)
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
 
   const handleCategoryChange = (event: SelectChangeEvent) => {
     setCategory(event.target.value)
@@ -188,6 +180,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
     setQuestionText('')
     setOptions(['', '', '', ''])
     setCorrectAnswer(null)
+    setEditingIndex(null)
   }
 
   const handleAddQuestion = () => {
@@ -198,8 +191,31 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
       options: [...options],
       correctAnswer: questionType === 'multiple_choice' ? correctAnswer : null,
     }
-    setQuestions((prev) => [...prev, newQuestion])
+    if (editingIndex !== null) {
+      setQuestions((prev) => prev.map((q, i) => (i === editingIndex ? newQuestion : q)))
+      setEditingIndex(null)
+    } else {
+      setQuestions((prev) => [...prev, newQuestion])
+    }
     resetCurrentQuestion()
+  }
+
+  const handleEditQuestion = (idx: number) => {
+    const q = questions[idx]
+    setQuestionType(q.type)
+    setQuestionText(q.text)
+    setOptions([...q.options])
+    setCorrectAnswer(q.correctAnswer)
+    setEditingIndex(idx)
+  }
+
+  const handleDeleteQuestion = (idx: number) => {
+    setQuestions((prev) => prev.filter((_, i) => i !== idx))
+    if (editingIndex === idx) {
+      resetCurrentQuestion()
+    } else if (editingIndex !== null && editingIndex > idx) {
+      setEditingIndex(editingIndex - 1)
+    }
   }
 
   const handleOptionChange = (index: number, value: string) => {
@@ -219,8 +235,6 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
         ? ['past', 'active', 'upcoming']
         : ['past', 'past', 'active']
 
-  const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[16] }}>
       {/* ═══ Header: Title + Cancel button ═══ */}
@@ -233,28 +247,10 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[4] }}>
-          <Typography
-            sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-              fontWeight: 700,
-              fontSize: 24,
-              lineHeight: '32px',
-              color: '#101828',
-              letterSpacing: '0.07px',
-            }}
-          >
+          <Typography sx={pageTitleSx}>
             สร้างแบบทดสอบใหม่
           </Typography>
-          <Typography
-            sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-              fontWeight: 400,
-              fontSize: 16,
-              lineHeight: '24px',
-              color: '#4A5565',
-              letterSpacing: '-0.31px',
-            }}
-          >
+          <Typography sx={pageSubtitleSx}>
             {currentStep === 1
               ? 'กรอกข้อมูลพื้นฐานของแบบทดสอบ'
               : currentStep === 2
@@ -281,7 +277,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
         >
           <Typography
             sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 500,
               fontSize: 16,
               lineHeight: '24px',
@@ -367,7 +363,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                 width: '100%',
                 height: 44,
                 borderRadius: '10px',
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontSize: 16,
                 letterSpacing: '-0.31px',
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -393,12 +389,12 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                 return selected
               }}
             >
-              {CATEGORIES.map((cat) => (
+              {EXAM_CATEGORIES.map((cat) => (
                 <MenuItem
                   key={cat}
                   value={cat}
                   sx={{
-                    fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                    fontFamily: FONT_FAMILY,
                     fontSize: 16,
                     color: '#0A0A0A',
                   }}
@@ -431,7 +427,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                     width: '100%',
                     '& .MuiPickersOutlinedInput-root': {
                       borderRadius: '10px',
-                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                      fontFamily: FONT_FAMILY,
                       fontSize: 16,
                       letterSpacing: '-0.31px',
                       height: 44,
@@ -453,7 +449,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
             />
             <Typography
               sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontWeight: 400,
                 fontSize: 12,
                 lineHeight: '16px',
@@ -484,7 +480,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
             >
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 16,
                   lineHeight: '24px',
@@ -509,65 +505,130 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                 <Box
                   key={idx}
                   sx={{
-                    bgcolor: '#FFFFFF',
-                    border: '1px solid #E5E7EB',
+                    bgcolor: editingIndex === idx ? '#FEF2F2' : '#FFFFFF',
+                    border: editingIndex === idx ? '2px solid #F62B25' : '1px solid #E5E7EB',
                     borderRadius: '10px',
                     px: space[24],
-                    py: space[12],
+                    py: space[16],
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: space[12],
+                    flexDirection: 'column',
+                    gap: space[8],
                   }}
                 >
-                  <Box
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      bgcolor: '#F62B25',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
+                  {/* Header row: number + text + badge + actions */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: space[12] }}>
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        bgcolor: '#F62B25',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontFamily: FONT_FAMILY_INTER,
+                          fontWeight: 600,
+                          fontSize: 13,
+                          color: '#FFFFFF',
+                        }}
+                      >
+                        {idx + 1}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        sx={{
+                          fontFamily: FONT_FAMILY,
+                          fontWeight: 500,
+                          fontSize: 14,
+                          color: '#101828',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {q.text}
+                      </Typography>
+                    </Box>
+                    <QuestionTypeBadge type={q.type} />
+                    {/* Edit button */}
+                    <Box
+                      onClick={() => handleEditQuestion(idx)}
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        '&:hover': { bgcolor: '#F3F4F6' },
+                        transition: 'background-color 0.15s',
+                      }}
+                    >
+                      <IconEdit variant="solid" sx={{ fontSize: 14, color: '#6B7280' }} />
+                    </Box>
+                    {/* Delete button */}
+                    <Box
+                      onClick={() => handleDeleteQuestion(idx)}
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        '&:hover': { bgcolor: '#F3F4F6' },
+                        transition: 'background-color 0.15s',
+                      }}
+                    >
+                      <IconDelete variant="solid" sx={{ fontSize: 14, color: '#6B7280' }} />
+                    </Box>
+                  </Box>
+
+                  {/* Details: options for multiple choice / essay label */}
+                  {q.type === 'multiple_choice' ? (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[4], pl: '40px' }}>
+                      {OPTION_LABELS.map((letter, optIdx) => {
+                        const isCorrect = q.correctAnswer === optIdx
+                        return (
+                          <Typography
+                            key={letter}
+                            sx={{
+                              fontFamily: FONT_FAMILY,
+                              fontWeight: isCorrect ? 500 : 400,
+                              fontSize: 13,
+                              lineHeight: '20px',
+                              color: isCorrect ? '#00A63E' : '#6A7282',
+                            }}
+                          >
+                            {`${letter}. ${q.options[optIdx] || '—'}`}
+                            {isCorrect && ' ✓'}
+                          </Typography>
+                        )
+                      })}
+                    </Box>
+                  ) : (
                     <Typography
                       sx={{
-                        fontFamily: "'Inter', sans-serif",
-                        fontWeight: 600,
+                        fontFamily: FONT_FAMILY,
+                        fontWeight: 400,
                         fontSize: 13,
-                        color: '#FFFFFF',
+                        color: '#8200DB',
+                        pl: '40px',
                       }}
                     >
-                      {idx + 1}
+                      คำตอบแบบข้อเขียน
                     </Typography>
-                  </Box>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      sx={{
-                        fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                        fontWeight: 500,
-                        fontSize: 14,
-                        color: '#101828',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {q.text}
-                    </Typography>
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                      fontWeight: 400,
-                      fontSize: 12,
-                      color: '#6A7282',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {q.type === 'multiple_choice' ? 'ปรนัย' : 'ข้อเขียน'}
-                  </Typography>
+                  )}
                 </Box>
               ))}
             </Box>
@@ -589,21 +650,21 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
           >
             <Typography
               sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontWeight: 600,
                 fontSize: 18,
                 lineHeight: '28px',
                 color: '#101828',
               }}
             >
-              เพิ่มคำถามใหม่
+              {editingIndex !== null ? `แก้ไขคำถามข้อ ${editingIndex + 1}` : 'เพิ่มคำถามใหม่'}
             </Typography>
 
             {/* Question type radio */}
             <Box>
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 14,
                   lineHeight: '20px',
@@ -632,7 +693,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                   label="ปรนัย (Multiple Choice)"
                   sx={{
                     '& .MuiFormControlLabel-label': {
-                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                      fontFamily: FONT_FAMILY,
                       fontWeight: 500,
                       fontSize: 16,
                       color: '#364153',
@@ -652,7 +713,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                   label="ข้อเขียน (Essay)"
                   sx={{
                     '& .MuiFormControlLabel-label': {
-                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                      fontFamily: FONT_FAMILY,
                       fontWeight: 500,
                       fontSize: 16,
                       color: '#364153',
@@ -666,7 +727,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
             <Box>
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 14,
                   lineHeight: '20px',
@@ -687,7 +748,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                   width: '100%',
                   '& .MuiOutlinedInput-root': {
                     borderRadius: '10px',
-                    fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                    fontFamily: FONT_FAMILY,
                     fontSize: 16,
                     letterSpacing: '-0.31px',
                     minHeight: 92,
@@ -718,7 +779,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
               <Box>
                 <Typography
                   sx={{
-                    fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                    fontFamily: FONT_FAMILY,
                     fontWeight: 500,
                     fontSize: 14,
                     lineHeight: '20px',
@@ -745,7 +806,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                       />
                       <Typography
                         sx={{
-                          fontFamily: "'Inter', sans-serif",
+                          fontFamily: FONT_FAMILY_INTER,
                           fontWeight: 600,
                           fontSize: 14,
                           color: '#364153',
@@ -765,7 +826,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                           flex: 1,
                           '& .MuiOutlinedInput-root': {
                             borderRadius: '10px',
-                            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                            fontFamily: FONT_FAMILY,
                             fontSize: 16,
                             height: 44,
                             '& fieldset': {
@@ -793,7 +854,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                 </Box>
                 <Typography
                   sx={{
-                    fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                    fontFamily: FONT_FAMILY,
                     fontWeight: 400,
                     fontSize: 12,
                     lineHeight: '16px',
@@ -823,14 +884,14 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
             >
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 16,
                   lineHeight: '24px',
                   color: '#FFFFFF',
                 }}
               >
-                + เพิ่มคำถามนี้
+                {editingIndex !== null ? '✓ บันทึกการแก้ไข' : '+ เพิ่มคำถามนี้'}
               </Typography>
             </Box>
           </Box>
@@ -855,7 +916,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
             >
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 16,
                   lineHeight: '24px',
@@ -885,7 +946,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
             >
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 16,
                   lineHeight: '24px',
@@ -904,27 +965,8 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
       {currentStep === 3 && (
         <>
           {/* ── ข้อมูลแบบทดสอบ summary card ── */}
-          <Box
-            sx={{
-              bgcolor: '#FFFFFF',
-              border: '2px solid #E5E7EB',
-              borderRadius: '10px',
-              p: { xs: '16px', sm: '26px' },
-              display: 'flex',
-              flexDirection: 'column',
-              gap: space[16],
-            }}
-          >
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                fontWeight: 600,
-                fontSize: 18,
-                lineHeight: '27px',
-                letterSpacing: '-0.44px',
-                color: '#101828',
-              }}
-            >
+          <Box sx={{ ...cardSx, gap: space[16] }}>
+            <Typography sx={sectionTitleSx}>
               ข้อมูลแบบทดสอบ
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[12] }}>
@@ -934,27 +976,10 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                 { label: 'คำอธิบาย:', value: description },
               ].map((row) => (
                 <Box key={row.label} sx={{ display: 'flex', gap: space[8], alignItems: 'baseline' }}>
-                  <Typography
-                    sx={{
-                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                      fontWeight: 500,
-                      fontSize: 14,
-                      lineHeight: '20px',
-                      color: '#6B7280',
-                      flexShrink: 0,
-                    }}
-                  >
+                  <Typography sx={{ ...metaLabelSx, flexShrink: 0 }}>
                     {row.label}
                   </Typography>
-                  <Typography
-                    sx={{
-                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                      fontWeight: 500,
-                      fontSize: 14,
-                      lineHeight: '20px',
-                      color: '#101828',
-                    }}
-                  >
+                  <Typography sx={metaValueSx}>
                     {row.value}
                   </Typography>
                 </Box>
@@ -963,27 +988,8 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
           </Box>
 
           {/* ── คำถามทั้งหมด ── */}
-          <Box
-            sx={{
-              bgcolor: '#FFFFFF',
-              border: '2px solid #E5E7EB',
-              borderRadius: '10px',
-              p: { xs: '16px', sm: '26px' },
-              display: 'flex',
-              flexDirection: 'column',
-              gap: space[16],
-            }}
-          >
-            <Typography
-              sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                fontWeight: 600,
-                fontSize: 18,
-                lineHeight: '27px',
-                letterSpacing: '-0.44px',
-                color: '#101828',
-              }}
-            >
+          <Box sx={{ ...cardSx, gap: space[16] }}>
+            <Typography sx={sectionTitleSx}>
               {`คำถามทั้งหมด (${questions.length} ข้อ)`}
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[16] }}>
@@ -1003,7 +1009,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: space[8], flexWrap: 'wrap' }}>
                       <Typography
                         sx={{
-                          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                          fontFamily: FONT_FAMILY,
                           fontWeight: 500,
                           fontSize: 16,
                           lineHeight: '24px',
@@ -1012,29 +1018,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                       >
                         {`${idx + 1}. ${q.text}`}
                       </Typography>
-                      <Box
-                        sx={{
-                          bgcolor: isMultiple ? '#DBEAFE' : '#F3E8FF',
-                          borderRadius: '9999px',
-                          height: 20,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          px: space[8],
-                          flexShrink: 0,
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
-                            fontWeight: 400,
-                            fontSize: 12,
-                            lineHeight: '16px',
-                            color: isMultiple ? '#1447E6' : '#8200DB',
-                          }}
-                        >
-                          {isMultiple ? 'ปรนัย' : 'ข้อเขียน'}
-                        </Typography>
-                      </Box>
+                      <QuestionTypeBadge type={q.type} />
                     </Box>
 
                     {isMultiple && (
@@ -1057,7 +1041,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                             >
                               <Typography
                                 sx={{
-                                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                                  fontFamily: FONT_FAMILY,
                                   fontWeight: isCorrect ? 500 : 400,
                                   fontSize: 14,
                                   lineHeight: '20px',
@@ -1080,7 +1064,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                                 >
                                   <Typography
                                     sx={{
-                                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                                      fontFamily: FONT_FAMILY,
                                       fontWeight: 500,
                                       fontSize: 11,
                                       color: '#FFFFFF',
@@ -1109,7 +1093,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                       >
                         <Typography
                           sx={{
-                            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                            fontFamily: FONT_FAMILY,
                             fontWeight: 500,
                             fontSize: 13,
                             color: '#8200DB',
@@ -1144,7 +1128,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
             >
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 16,
                   lineHeight: '24px',
@@ -1173,7 +1157,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
             >
               <Typography
                 sx={{
-                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontWeight: 500,
                   fontSize: 16,
                   lineHeight: '24px',

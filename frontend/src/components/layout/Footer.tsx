@@ -37,7 +37,7 @@ export function Footer() {
             wordBreak: 'break-word',
           }}
         >
-          Copyright &copy; {new Date().getFullYear()} LOTTERYPLUS. All rights reserved.
+          Copyright &copy; {new Date().getFullYear()} LOTTERYPLUS. All rights reserved (Version {__APP_VERSION__}).
         </Typography>
       </Box>
     </Box>
