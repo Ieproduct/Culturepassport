@@ -6,6 +6,7 @@ import { theme } from '@/theme'
 import { ServiceProvider } from '@/services'
 import { AuthProvider, MockAuthProvider } from '@/contexts/AuthContext'
 import { RoleGuard } from '@/guards/RoleGuard'
+import { HomePage } from '@/pages/HomePage'
 import { LoginPage } from '@/pages/LoginPage'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
 import { ManagerDashboard } from '@/pages/manager/ManagerDashboard'
@@ -20,6 +21,7 @@ export function App() {
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
 
             <Route
@@ -59,7 +61,7 @@ export function App() {
               }
             />
 
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
