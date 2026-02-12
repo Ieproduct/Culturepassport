@@ -168,7 +168,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
   const [dueDate, setDueDate] = useState<Dayjs | null>(null)
 
   /* ─── Multi-step state ─── */
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1)
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
 
   /* ─── Step 2: questions list ─── */
   const [questions, setQuestions] = useState<Question[]>(initialData?.questions ?? [])
@@ -215,7 +215,9 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
   const stepStates: [StepState, StepState, StepState] =
     currentStep === 1
       ? ['active', 'upcoming', 'upcoming']
-      : ['past', 'active', 'upcoming']
+      : currentStep === 2
+        ? ['past', 'active', 'upcoming']
+        : ['past', 'past', 'active']
 
   const OPTION_LABELS = ['A', 'B', 'C', 'D'] as const
 
@@ -255,7 +257,9 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
           >
             {currentStep === 1
               ? 'กรอกข้อมูลพื้นฐานของแบบทดสอบ'
-              : `เพิ่มคำถาม (${questions.length} ข้อ)`}
+              : currentStep === 2
+                ? `เพิ่มคำถาม (${questions.length} ข้อ)`
+                : 'ตรวจสอบข้อมูลก่อนบันทึก'}
           </Typography>
         </Box>
 
@@ -865,6 +869,7 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
 
             {/* ถัดไป: ตรวจสอบ */}
             <Box
+              onClick={questions.length > 0 ? () => setCurrentStep(3) : undefined}
               sx={{
                 bgcolor: questions.length > 0 ? '#F62B25' : '#D1D5DB',
                 height: 40,
@@ -889,6 +894,294 @@ export function CreateExamForm({ onCancel, initialData }: CreateExamFormProps) {
                 }}
               >
                 ถัดไปตรวจสอบ
+              </Typography>
+            </Box>
+          </Box>
+        </>
+      )}
+
+      {/* ═══ Step 3: Review & Confirm ═══ */}
+      {currentStep === 3 && (
+        <>
+          {/* ── ข้อมูลแบบทดสอบ summary card ── */}
+          <Box
+            sx={{
+              bgcolor: '#FFFFFF',
+              border: '2px solid #E5E7EB',
+              borderRadius: '10px',
+              p: { xs: '16px', sm: '26px' },
+              display: 'flex',
+              flexDirection: 'column',
+              gap: space[16],
+            }}
+          >
+            <Typography
+              sx={{
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontWeight: 600,
+                fontSize: 18,
+                lineHeight: '27px',
+                letterSpacing: '-0.44px',
+                color: '#101828',
+              }}
+            >
+              ข้อมูลแบบทดสอบ
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[12] }}>
+              {[
+                { label: 'ชื่อ:', value: title },
+                { label: 'หมวดหมู่:', value: category },
+                { label: 'คำอธิบาย:', value: description },
+              ].map((row) => (
+                <Box key={row.label} sx={{ display: 'flex', gap: space[8], alignItems: 'baseline' }}>
+                  <Typography
+                    sx={{
+                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                      fontWeight: 500,
+                      fontSize: 14,
+                      lineHeight: '20px',
+                      color: '#6B7280',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {row.label}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                      fontWeight: 500,
+                      fontSize: 14,
+                      lineHeight: '20px',
+                      color: '#101828',
+                    }}
+                  >
+                    {row.value}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
+          {/* ── คำถามทั้งหมด ── */}
+          <Box
+            sx={{
+              bgcolor: '#FFFFFF',
+              border: '2px solid #E5E7EB',
+              borderRadius: '10px',
+              p: { xs: '16px', sm: '26px' },
+              display: 'flex',
+              flexDirection: 'column',
+              gap: space[16],
+            }}
+          >
+            <Typography
+              sx={{
+                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontWeight: 600,
+                fontSize: 18,
+                lineHeight: '27px',
+                letterSpacing: '-0.44px',
+                color: '#101828',
+              }}
+            >
+              {`คำถามทั้งหมด (${questions.length} ข้อ)`}
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[16] }}>
+              {questions.map((q, idx) => {
+                const isMultiple = q.type === 'multiple_choice'
+                return (
+                  <Box
+                    key={idx}
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: space[8],
+                      pb: idx < questions.length - 1 ? space[16] : 0,
+                      borderBottom: idx < questions.length - 1 ? '1px solid #E5E7EB' : 'none',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: space[8], flexWrap: 'wrap' }}>
+                      <Typography
+                        sx={{
+                          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                          fontWeight: 500,
+                          fontSize: 16,
+                          lineHeight: '24px',
+                          color: '#101828',
+                        }}
+                      >
+                        {`${idx + 1}. ${q.text}`}
+                      </Typography>
+                      <Box
+                        sx={{
+                          bgcolor: isMultiple ? '#DBEAFE' : '#F3E8FF',
+                          borderRadius: '9999px',
+                          height: 20,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          px: space[8],
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                            fontWeight: 400,
+                            fontSize: 12,
+                            lineHeight: '16px',
+                            color: isMultiple ? '#1447E6' : '#8200DB',
+                          }}
+                        >
+                          {isMultiple ? 'ปรนัย' : 'ข้อเขียน'}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {isMultiple && (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: space[4], pl: space[8] }}>
+                        {OPTION_LABELS.map((letter, optIdx) => {
+                          const isCorrect = q.correctAnswer === optIdx
+                          return (
+                            <Box
+                              key={letter}
+                              sx={{
+                                bgcolor: isCorrect ? '#F0FDF4' : 'transparent',
+                                border: isCorrect ? '1px solid #7BF1A8' : '1px solid transparent',
+                                borderRadius: '8px',
+                                px: space[12],
+                                py: space[4],
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: space[8],
+                              }}
+                            >
+                              <Typography
+                                sx={{
+                                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                                  fontWeight: isCorrect ? 500 : 400,
+                                  fontSize: 14,
+                                  lineHeight: '20px',
+                                  color: isCorrect ? '#00A63E' : '#4A5565',
+                                }}
+                              >
+                                {`${letter}. ${q.options[optIdx]}`}
+                              </Typography>
+                              {isCorrect && (
+                                <Box
+                                  sx={{
+                                    bgcolor: '#00A63E',
+                                    borderRadius: '9999px',
+                                    height: 18,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    px: space[6],
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <Typography
+                                    sx={{
+                                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                                      fontWeight: 500,
+                                      fontSize: 11,
+                                      color: '#FFFFFF',
+                                    }}
+                                  >
+                                    คำตอบที่ถูกต้อง
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
+                          )
+                        })}
+                      </Box>
+                    )}
+
+                    {!isMultiple && (
+                      <Box
+                        sx={{
+                          bgcolor: '#FAF5FF',
+                          border: '1px solid #E9D4FF',
+                          borderRadius: '8px',
+                          px: space[12],
+                          py: space[8],
+                          ml: space[8],
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                            fontWeight: 500,
+                            fontSize: 13,
+                            color: '#8200DB',
+                          }}
+                        >
+                          📝 คำตอบแบบข้อเขียน
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                )
+              })}
+            </Box>
+          </Box>
+
+          {/* ── Bottom navigation buttons ── */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box
+              onClick={() => setCurrentStep(2)}
+              sx={{
+                height: 44,
+                borderRadius: '10px',
+                border: '2px solid #F62B25',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                px: space[24],
+                cursor: 'pointer',
+                '&:hover': { bgcolor: '#FEF2F2' },
+                transition: 'background-color 0.15s',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 16,
+                  lineHeight: '24px',
+                  color: '#F62B25',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ย้อนกลับแก้ไข
+              </Typography>
+            </Box>
+
+            <Box
+              onClick={onCancel}
+              sx={{
+                bgcolor: '#00A63E',
+                height: 44,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                px: space[24],
+                cursor: 'pointer',
+                '&:hover': { bgcolor: '#059642' },
+                transition: 'background-color 0.15s',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 16,
+                  lineHeight: '24px',
+                  color: '#FFFFFF',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ✓ บันทึกแบบทดสอบ
               </Typography>
             </Box>
           </Box>
