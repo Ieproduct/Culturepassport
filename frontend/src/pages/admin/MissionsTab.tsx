@@ -5,18 +5,11 @@ import {
   Visibility as EyeIcon,
 } from '@mui/icons-material'
 import { space } from '@/theme/spacing'
+import { FONT_FAMILY } from '@/theme/fonts'
+import { CATEGORY_COLORS, DEFAULT_CATEGORY_COLOR } from '@/theme/categories'
 import { useMissions } from '@/hooks/useMissions'
 import { useServices } from '@/services'
 import { colors } from '@/theme'
-
-/* ─── Category color map (Figma 45:14119–45:14174) ─── */
-const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  'วัฒนธรรมองค์กร': { bg: '#DBEAFE', border: '#BEDBFF', text: '#1447E6' },
-  'ความปลอดภัยและนโยบาย': { bg: '#FFE2E2', border: '#FFC9C9', text: '#C10007' },
-  'เทคนิคการทำงาน': { bg: '#DCFCE7', border: '#B9F8CF', text: '#008236' },
-  'ทีมและการสื่อสาร': { bg: '#F3E8FF', border: '#E9D4FF', text: '#8200DB' },
-}
-const DEFAULT_CATEGORY_COLOR = { bg: '#F3F4F6', border: '#E5E7EB', text: '#364153' }
 
 /* ─── Badge component (Figma 45:14119) ─── */
 function Badge({ bg, border, text, children }: { bg: string; border: string; text: string; children: React.ReactNode }) {
@@ -35,7 +28,7 @@ function Badge({ bg, border, text, children }: { bg: string; border: string; tex
     >
       <Typography
         sx={{
-          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+          fontFamily: FONT_FAMILY,
           fontWeight: 400,
           fontSize: 12,
           lineHeight: '16px',
@@ -90,7 +83,7 @@ function MissionCard({
       >
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: FONT_FAMILY,
             fontWeight: 500,
             fontSize: 16,
             lineHeight: '24px',
@@ -117,7 +110,7 @@ function MissionCard({
           <EyeIcon sx={{ fontSize: 14, color: '#FFFFFF' }} />
           <Typography
             sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 500,
               fontSize: 12,
               lineHeight: '16px',
@@ -133,7 +126,7 @@ function MissionCard({
       {/* Row 2: Description */}
       <Typography
         sx={{
-          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+          fontFamily: FONT_FAMILY,
           fontWeight: 400,
           fontSize: 14,
           lineHeight: '20px',
@@ -235,7 +228,7 @@ export function MissionsTab() {
       >
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: FONT_FAMILY,
             fontWeight: 600,
             fontSize: 18,
             lineHeight: '27px',
@@ -268,7 +261,7 @@ export function MissionsTab() {
               '& .MuiOutlinedInput-root': {
                 height: 42,
                 borderRadius: '10px',
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontSize: 16,
                 letterSpacing: '-0.31px',
                 '& .MuiOutlinedInput-input': {
@@ -316,7 +309,7 @@ export function MissionsTab() {
             <SearchIcon sx={{ fontSize: 48, color: '#9CA3AF' }} />
             <Typography
               sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontWeight: 500,
                 fontSize: 16,
                 lineHeight: '24px',

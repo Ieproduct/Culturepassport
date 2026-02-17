@@ -9,6 +9,7 @@ import {
   Storage as DatabaseIcon,
 } from '@mui/icons-material'
 import { space } from '@/theme/spacing'
+import { FONT_FAMILY, FONT_FAMILY_LATIN } from '@/theme/fonts'
 import { useServices } from '@/services'
 
 type Stats = {
@@ -64,7 +65,7 @@ function OverviewStatsCard({
         </Box>
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: FONT_FAMILY,
             fontWeight: 500,
             fontSize: 14,
             lineHeight: '20px',
@@ -76,7 +77,7 @@ function OverviewStatsCard({
       </Box>
       <Typography
         sx={{
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: FONT_FAMILY_LATIN,
           fontWeight: 700,
           fontSize: 30,
           lineHeight: '36px',
@@ -88,7 +89,7 @@ function OverviewStatsCard({
       </Typography>
       <Typography
         sx={{
-          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+          fontFamily: FONT_FAMILY,
           fontWeight: 400,
           fontSize: 14,
           lineHeight: '20px',
@@ -153,7 +154,7 @@ function MissionStatusCard({
     >
       <Typography
         sx={{
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: FONT_FAMILY_LATIN,
           fontWeight: 700,
           fontSize: 24,
           lineHeight: '32px',
@@ -166,7 +167,7 @@ function MissionStatusCard({
       </Typography>
       <Typography
         sx={{
-          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+          fontFamily: FONT_FAMILY,
           fontWeight: 400,
           fontSize: 14,
           lineHeight: '20px',
@@ -188,7 +189,7 @@ function SectionHeading({ icon, children }: { icon: ReactNode; children: ReactNo
       <Box sx={{ display: 'flex', color: '#6B7280', fontSize: 20 }}>{icon}</Box>
       <Typography
         sx={{
-          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+          fontFamily: FONT_FAMILY,
           fontWeight: 600,
           fontSize: 18,
           lineHeight: '27px',
@@ -229,7 +230,7 @@ function ActivityRow({ name, mission, date, score }: { name: string; mission: st
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: FONT_FAMILY,
             fontSize: 14,
             lineHeight: '20px',
             color: '#101828',
@@ -246,7 +247,7 @@ function ActivityRow({ name, mission, date, score }: { name: string; mission: st
         </Typography>
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: FONT_FAMILY,
             fontWeight: 400,
             fontSize: 12,
             lineHeight: '16px',
@@ -259,7 +260,7 @@ function ActivityRow({ name, mission, date, score }: { name: string; mission: st
       {score != null && (
         <Typography
           sx={{
-            fontFamily: "'Inter', sans-serif",
+            fontFamily: FONT_FAMILY_LATIN,
             fontWeight: 500,
             fontSize: 14,
             lineHeight: '20px',
@@ -407,7 +408,7 @@ export function OverviewTab() {
     >
       <Typography
         sx={{
-          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+          fontFamily: FONT_FAMILY,
           fontWeight: 600,
           fontSize: 18,
           lineHeight: '27px',

@@ -21,6 +21,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { IconCategory } from '@/components/icons/IconCategory'
 import { useAuth } from '@/hooks/useAuth'
 import { space } from '@/theme/spacing'
+import { FONT_FAMILY } from '@/theme/fonts'
 import { OverviewTab } from './OverviewTab'
 import { UsersTab } from './UsersTab'
 import { MissionsTab } from './MissionsTab'
@@ -75,7 +76,7 @@ function InfoChip({ icon, label, value }: { icon: ReactNode; label: string; valu
       <Box sx={{ minWidth: 0 }}>
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: FONT_FAMILY,
             fontWeight: 400,
             fontSize: 12,
             lineHeight: '16px',
@@ -86,7 +87,7 @@ function InfoChip({ icon, label, value }: { icon: ReactNode; label: string; valu
         </Typography>
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: FONT_FAMILY,
             fontWeight: 600,
             fontSize: 14,
             lineHeight: '20px',
@@ -139,7 +140,7 @@ export function AdminDashboard() {
         {/* Heading */}
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: FONT_FAMILY,
             fontWeight: 700,
             fontSize: 30,
             lineHeight: '36px',
@@ -154,7 +155,7 @@ export function AdminDashboard() {
         {/* Subtitle */}
         <Typography
           sx={{
-            fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+            fontFamily: FONT_FAMILY,
             fontWeight: 400,
             fontSize: 16,
             lineHeight: '24px',
@@ -217,7 +218,7 @@ export function AdminDashboard() {
               minWidth: 'auto',
               px: space[8],
               py: space[8],
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 500,
               fontSize: 16,
               lineHeight: '24px',

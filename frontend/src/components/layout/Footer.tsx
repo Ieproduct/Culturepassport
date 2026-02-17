@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { space } from '@/theme/spacing'
+import { FONT_FAMILY_LATIN } from '@/theme/fonts'
 
 export function Footer() {
   return (
@@ -28,7 +29,7 @@ export function Footer() {
       >
         <Typography
           sx={{
-            fontFamily: "'Inter', sans-serif",
+            fontFamily: FONT_FAMILY_LATIN,
             fontWeight: 400,
             fontSize: { xs: 12, sm: 14 },
             lineHeight: '18px',

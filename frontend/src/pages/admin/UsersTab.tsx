@@ -9,6 +9,7 @@ import {
   Cached as ClearIcon,
 } from '@mui/icons-material'
 import { space } from '@/theme/spacing'
+import { FONT_FAMILY } from '@/theme/fonts'
 import { useProfiles } from '@/hooks/useProfiles'
 import { useCascadingFilter } from '@/hooks/useCascadingFilter'
 import { useServices } from '@/services'
@@ -43,7 +44,7 @@ const TABLE_COLUMNS = [
 const selectSx = {
   height: 40,
   borderRadius: '10px',
-  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+  fontFamily: FONT_FAMILY,
   fontSize: 16,
   color: '#0A0A0A',
   letterSpacing: '-0.31px',
@@ -73,7 +74,7 @@ function FilterLabel({ icon, children }: { icon: React.ReactNode; children: Reac
       <Box sx={{ display: 'flex', color: '#6B7280', fontSize: 16, flexShrink: 0 }}>{icon}</Box>
       <Typography
         sx={{
-          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+          fontFamily: FONT_FAMILY,
           fontWeight: 500,
           fontSize: 14,
           lineHeight: '20px',
@@ -187,7 +188,7 @@ export function UsersTab() {
         >
           <Typography
             sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 600,
               fontSize: 18,
               lineHeight: '27px',
@@ -221,7 +222,7 @@ export function UsersTab() {
             <ClearIcon sx={{ fontSize: 16, color: hasActiveFilter ? '#F62B25' : '#9CA3AF' }} />
             <Typography
               sx={{
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontWeight: 500,
                 fontSize: 16,
                 lineHeight: '24px',
@@ -257,7 +258,7 @@ export function UsersTab() {
               '& .MuiOutlinedInput-root': {
                 height: 48,
                 borderRadius: '10px',
-                fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontSize: 16,
                 letterSpacing: '-0.31px',
                 '& .MuiOutlinedInput-input': {
@@ -360,7 +361,7 @@ export function UsersTab() {
           <Typography
             component="div"
             sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 400,
               fontSize: 14,
               lineHeight: '20px',
@@ -400,7 +401,7 @@ export function UsersTab() {
         >
           <Typography
             sx={{
-              fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontWeight: 600,
               fontSize: 18,
               lineHeight: '27px',
@@ -433,7 +434,7 @@ export function UsersTab() {
                       height: 40,
                       padding: `0 ${space[24]}`,
                       textAlign: 'left',
-                      fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                      fontFamily: FONT_FAMILY,
                       fontWeight: 500,
                       fontSize: 12,
                       lineHeight: '16px',
@@ -455,7 +456,7 @@ export function UsersTab() {
                   <td colSpan={9} style={{ textAlign: 'center', padding: `${space[64]} ${space[24]}` }}>
                     <Typography
                       sx={{
-                        fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                        fontFamily: FONT_FAMILY,
                         fontWeight: 500,
                         fontSize: 16,
                         color: '#6A7282',
@@ -480,7 +481,7 @@ export function UsersTab() {
                       <SearchIcon sx={{ fontSize: 48, color: '#9CA3AF' }} />
                       <Typography
                         sx={{
-                          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                          fontFamily: FONT_FAMILY,
                           fontWeight: 500,
                           fontSize: 16,
                           lineHeight: '24px',
@@ -493,7 +494,7 @@ export function UsersTab() {
                       <Typography
                         onClick={handleClearAll}
                         sx={{
-                          fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+                          fontFamily: FONT_FAMILY,
                           fontWeight: 500,
                           fontSize: 14,
                           lineHeight: '20px',
@@ -557,7 +558,7 @@ export function UsersTab() {
 /* ─── Shared cell style for data rows ─── */
 const cellStyle: React.CSSProperties = {
   padding: `${space[12]} ${space[24]}`,
-  fontFamily: "'Inter', 'Noto Sans Thai', sans-serif",
+  fontFamily: FONT_FAMILY,
   fontSize: 14,
   lineHeight: '20px',
   color: '#4A5565',

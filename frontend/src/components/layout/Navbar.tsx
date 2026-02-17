@@ -6,12 +6,11 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { space } from '@/theme/spacing'
+import { FONT_FAMILY, FONT_FAMILY_LATIN } from '@/theme/fonts'
+import { DESKTOP_FLEX, DESKTOP_BLOCK } from '@/theme/responsive'
 import type { UserRole } from '@/types'
 
 /* ─── Constants ─── */
-const FONT = "'Inter', sans-serif"
-const FONT_TH = "'Inter', 'Noto Sans Thai', sans-serif"
-
 const ROLE_LABEL: Record<UserRole, string> = {
   admin: 'Admin',
   manager: 'Manager',
@@ -24,13 +23,9 @@ const PAGE_TITLE: Record<UserRole, string> = {
   employee: 'แดชบอร์ดพนักงาน',
 }
 
-/** Responsive display helpers — desktop only (md+) */
-const DESKTOP_FLEX = { xs: 'none', md: 'flex' } as const
-const DESKTOP_BLOCK = { xs: 'none', md: 'block' } as const
-
 /* ─── Shared sx fragments ─── */
 const brandNameSx = {
-  fontFamily: FONT,
+  fontFamily: FONT_FAMILY_LATIN,
   fontWeight: 700,
   fontSize: 20,
   lineHeight: '28px',
@@ -163,7 +158,7 @@ function LogoBrand({ onClick }: { onClick: () => void }) {
         {/* Subtitle — tablet+ */}
         <Typography
           sx={{
-            fontFamily: FONT_TH,
+            fontFamily: FONT_FAMILY,
             fontWeight: 400,
             fontSize: 12,
             lineHeight: '16px',
@@ -197,7 +192,7 @@ function PagePill({ role }: { role: UserRole }) {
       <IconCategory variant="solid" sx={{ fontSize: 20, color: '#F62B25' }} />
       <Typography
         sx={{
-          fontFamily: FONT_TH,
+          fontFamily: FONT_FAMILY,
           fontWeight: 500,
           fontSize: 16,
           lineHeight: '24px',
@@ -261,7 +256,7 @@ function AccountButton({ initials, role }: { initials: string; role: UserRole })
       >
         <Typography
           sx={{
-            fontFamily: FONT_TH,
+            fontFamily: FONT_FAMILY,
             fontWeight: 600,
             fontSize: 12,
             lineHeight: '16px',
@@ -277,7 +272,7 @@ function AccountButton({ initials, role }: { initials: string; role: UserRole })
       <Box sx={{ display: DESKTOP_FLEX, flexDirection: 'column', gap: space[2] }}>
         <Typography
           sx={{
-            fontFamily: FONT,
+            fontFamily: FONT_FAMILY_LATIN,
             fontWeight: 500,
             fontSize: 12,
             lineHeight: '12px',
@@ -289,7 +284,7 @@ function AccountButton({ initials, role }: { initials: string; role: UserRole })
         </Typography>
         <Typography
           sx={{
-            fontFamily: FONT,
+            fontFamily: FONT_FAMILY_LATIN,
             fontWeight: 600,
             fontSize: 14,
             lineHeight: '14px',
@@ -325,7 +320,7 @@ function LogoutButton({ onClick }: { onClick: () => void }) {
       <LogoutIcon sx={{ fontSize: 20, color: '#E7000B' }} />
       <Typography
         sx={{
-          fontFamily: FONT_TH,
+          fontFamily: FONT_FAMILY,
           fontWeight: 500,
           fontSize: 16,
           lineHeight: '24px',

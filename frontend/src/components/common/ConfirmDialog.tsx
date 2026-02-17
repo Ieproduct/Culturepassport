@@ -1,5 +1,6 @@
 import { Dialog, Box, Typography, Button, IconButton, SvgIcon } from '@mui/material'
 import type { ReactNode } from 'react'
+import { FONT_FAMILY_LATIN } from '@/theme/fonts'
 
 /** Figma "Icon no x" (I40:11787;2963:21629) — Union shape, color Grey 01 #9A9A9A */
 function IconCloseX() {
@@ -91,7 +92,7 @@ export function ConfirmDialog({
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
           <Typography
             sx={{
-              fontFamily: "'Inter', sans-serif",
+              fontFamily: FONT_FAMILY_LATIN,
               fontWeight: 600,
               fontSize: 24,
               lineHeight: '32px',
@@ -102,7 +103,7 @@ export function ConfirmDialog({
           </Typography>
           <Typography
             sx={{
-              fontFamily: "'Inter', sans-serif",
+              fontFamily: FONT_FAMILY_LATIN,
               fontWeight: 400,
               fontSize: 16,
               lineHeight: '20px',

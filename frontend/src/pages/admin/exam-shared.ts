@@ -1,9 +1,9 @@
 // Shared constants, types, and styles for exam-related components
 // (CreateExamForm, ExamsTab, ExamDetailView)
 
-/* ─── Font families ─── */
-export const FONT_FAMILY = "'Inter', 'Noto Sans Thai', sans-serif"
-export const FONT_FAMILY_INTER = "'Inter', sans-serif"
+/* ─── Font families (re-exported from central theme) ─── */
+export { FONT_FAMILY, FONT_FAMILY_LATIN as FONT_FAMILY_INTER } from '@/theme/fonts'
+import { FONT_FAMILY } from '@/theme/fonts'
 
 /* ─── Question types ─── */
 export type QuestionType = 'multiple_choice' | 'essay'
@@ -33,21 +33,8 @@ export const EXAM_CATEGORIES = [
   'อื่นๆ',
 ]
 
-/* ─── Category color map (Figma exam card badges) ─── */
-export const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
-  'ความปลอดภัยและนโยบาย': { bg: '#FFE2E2', text: '#9F0712' },
-  'วัฒนธรรมองค์กร': { bg: '#DBEAFE', text: '#193CB8' },
-  'เทคนิคการทำงาน': { bg: '#DCFCE7', text: '#016630' },
-  'ทีมและการสื่อสาร': { bg: '#F3E8FF', text: '#8200DB' },
-  'การพัฒนาทักษะ': { bg: '#FFF7ED', text: '#9A3412' },
-  'ผลิตภัณฑ์และบริการ': { bg: '#F0F9FF', text: '#0369A1' },
-  'กระบวนการทำงาน': { bg: '#F5F5F5', text: '#525252' },
-  'ความรู้ทางธุรกิจ': { bg: '#FFFBEB', text: '#92400E' },
-  'เทคโนโลยีและเครื่องมือ': { bg: '#F0FDFA', text: '#115E59' },
-  'มาตรฐานคุณภาพ': { bg: '#FDF2F8', text: '#9D174D' },
-  'อื่นๆ': { bg: '#F3F4F6', text: '#364153' },
-}
-export const DEFAULT_CATEGORY_COLOR = { bg: '#F3F4F6', text: '#364153' }
+/* ─── Category color map (re-exported from central theme) ─── */
+export { CATEGORY_COLORS, DEFAULT_CATEGORY_COLOR } from '@/theme/categories'
 
 /* ─── Shared sx patterns ─── */
 export const cardSx = {

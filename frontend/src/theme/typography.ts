@@ -2,7 +2,7 @@
 // Source: Figma node 2745:12139
 // Font: Inter (Thai fallback: Noto Sans Thai)
 
-const FONT_FAMILY = '"Inter", "Noto Sans Thai", sans-serif';
+import { FONT_FAMILY } from './fonts'
 
 export const typographyTokens = {
   fontFamily: FONT_FAMILY,
