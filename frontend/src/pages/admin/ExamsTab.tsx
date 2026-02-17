@@ -695,7 +695,7 @@ export function ExamsTab() {
             fontWeight: 600,
             fontSize: 18,
             lineHeight: '28px',
-            color: '#6B7280',
+            color: '#111827',
             letterSpacing: '-0.44px',
           }}
         >

@@ -40,7 +40,7 @@ const tabs = [
   { label: 'มอบหมายภารกิจ', icon: <AssignIcon /> },
   { label: 'สร้างแบบทดสอบ/ภารกิจ', icon: <QuizIcon /> },
   { label: 'ข้อมูลหลัก', icon: <StorageIcon /> },
-  { label: 'สร้างบัญชีผู้ใช้', icon: <PersonAddIcon /> },
+  { label: 'Create Account', icon: <PersonAddIcon /> },
   { label: 'ตั้งค่าแผนการ', icon: <MapIcon /> },
   { label: 'ตั้งค่าประกาศ', icon: <CampaignIcon /> },
   { label: 'ส่งออกข้อมูล', icon: <ExportIcon /> },
