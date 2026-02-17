@@ -11,6 +11,8 @@ import {
   InputAdornment,
   IconButton,
   Link,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material'
 import { Email, Lock, Visibility, VisibilityOff, Login as LoginIcon } from '@mui/icons-material'
 import { useAuth } from '@/hooks/useAuth'
@@ -32,6 +34,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
 
   // Redirect when session + role are ready
   useEffect(() => {
@@ -261,8 +264,30 @@ export function LoginPage() {
                 />
               </Box>
 
-              {/* Forgot password */}
-              <Box textAlign="right">
+              {/* Remember me & Forgot password */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      size="small"
+                      sx={{
+                        color: '#9CA3AF',
+                        '&.Mui-checked': { color: RED },
+                      }}
+                    />
+                  }
+                  label="จดจำฉัน"
+                  sx={{
+                    '& .MuiFormControlLabel-label': {
+                      fontSize: 14,
+                      lineHeight: '20px',
+                      color: '#4A5565',
+                      letterSpacing: '-0.15px',
+                    },
+                  }}
+                />
                 <Link
                   component="button"
                   type="button"
